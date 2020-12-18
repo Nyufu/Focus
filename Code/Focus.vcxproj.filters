@@ -1,0 +1,23 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <None Include="..\.clang-format" />
+    <None Include="cpp.hint" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Platform.h" />
+    <ClInclude Include="NonVolatile.h" />
+    <ClInclude Include="Config.h" />
+    <ClInclude Include="Macros.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Focus">
+      <UniqueIdentifier>{1d976492-426e-4884-ae7f-b3ecd3ccf0ea}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Focus\Main.cpp">
+      <Filter>Focus</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>

@@ -1,0 +1,15 @@
+#define __CLANG__
+#define __MSVC__
+#define STD
+#define STDEX
+#define ONLY_CONSTRUCT
+#define WARNING_SCOPE_BEGIN
+#define WARNING_SCOPE_END
+#define CLANG_WARNING_DISABLE
+#define MSVC_WARNING_DISABLE
+#define INLINE
+#define TO_CONSTANT
+#define CONCATENATE
+#define STRINGIZE
+#define WIDE
+#define SUPPRESS_INITIALIZE
