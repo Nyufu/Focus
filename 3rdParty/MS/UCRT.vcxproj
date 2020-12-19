@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="DebugClang|x64">
+      <Configuration>DebugClang</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="OptimizeClang|x64">
+      <Configuration>OptimizeClang</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Optimize|x64">
+      <Configuration>Optimize</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup>
+    <VSInstallDir>$(VsInstallRoot)\</VSInstallDir>
+    <VCInstallDir>$(VSInstallDir)VC\</VCInstallDir>
+  </PropertyGroup>
+  <Import Project="$(VCInstallDir)Auxiliary\Build\Microsoft.VCToolsVersion.default.props" />
+  <PropertyGroup>
+    <ProjectGuid>{3a1a4604-942c-4017-8099-645ab1305623}</ProjectGuid>
+    <ReadOnlyProject>true</ReadOnlyProject>
+    <DebugBuild>$(Configuration.Contains('Debug'))</DebugBuild>
+    <DSufix Condition="$(DebugBuild)">d</DSufix>
+    <VCToolsInstallDir>$(VCInstallDir)Tools\MSVC\$(VCToolsVersion)\</VCToolsInstallDir>
+    <VC_IncludePath>$(VCToolsInstallDir)include</VC_IncludePath>
+    <TargetPlatformVersion>10.0.19041.0</TargetPlatformVersion>
+    <UCRTContentRoot>$(Registry:HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\Microsoft\Windows Kits\Installed Roots@KitsRoot10)</UCRTContentRoot>
+    <UniversalCRT_IncludePath>$(UCRTContentRoot)Include\$(TargetPlatformVersion)\ucrt</UniversalCRT_IncludePath>
+    <Windows10SdkRoot>$(Registry:HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\Microsoft\Microsoft SDKs\Windows\v10.0@InstallationFolder)</Windows10SdkRoot>
+    <Windows10Sdk_IncludeDir>$(Windows10SdkRoot)Include\$(TargetPlatformVersion)\</Windows10Sdk_IncludeDir>
+    <Windows10Sdk_IncludePath>$(Windows10Sdk_IncludeDir)um;$(Windows10Sdk_IncludeDir)shared;$(Windows10Sdk_IncludeDir)winrt</Windows10Sdk_IncludePath>
+    <C>$(VCToolsInstallDir)crt\src\</C>
+    <C1>$(C)concrt\</C1>
+    <C2>$(C)linkopts\</C2>
+    <C3>$(C)stl\</C3>
+    <C4>$(C)vcruntime\</C4>
+    <C5>$(C)x64\</C5>
+    <U>$(UCRTContentRoot)Source\$(TargetPlatformVersion)\ucrt\</U>
+    <U1>$(U)conio\</U1>
+    <U2>$(U)convert\</U2>
+    <U3>$(U)dll\</U3>
+    <U4>$(U)env\</U4>
+    <U5>$(U)exec\</U5>
+    <U6>$(U)filesystem\</U6>
+    <U7>$(U)heap\</U7>
+    <U8>$(U)inc\</U8>
+    <U9>$(U)initializers\</U9>
+    <Ua>$(U)internal\</Ua>
+    <Ub>$(U)locale\</Ub>
+    <Uc>$(U)lowio\</Uc>
+    <Ud>$(U)misc\</Ud>
+    <Ue>$(U)startup\</Ue>
+    <Uf>$(U)stdio\</Uf>
+    <Ug>$(U)stdlib\</Ug>
+    <Uh>$(U)string\</Uh>
+    <Ui>$(U)time\</Ui>
+  </PropertyGroup>
+  <ItemGroup>
+    <ClCommandLines Include="/FI $(MSBuildThisFileDirectory)\crt_cfg.h /Zc:__cplusplus /std:c++latest /TP /MD$(DSufix)" />
+    <_ProjectDirectories Include=".">
+      <IncludePath>$(VC_IncludePath);$(UniversalCRT_IncludePath);$(Windows10Sdk_IncludePath);$(U8);$(C1);$(C3);$(C4);$(MSBuildThisFileDirectory)\include</IncludePath>
+      <ProjectDir>.</ProjectDir>
+    </_ProjectDirectories>
+    <PropertyPageSchema Include="general.xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <o1 Include="$(C4)exe_main.cpp" Condition="false" />
+    <o1 Include="$(C4)exe_winmain.cpp" />
+    <o1 Include="$(C4)exe_wmain.cpp" />
+    <o1 Include="$(C4)exe_wwinmain.cpp" />
+  </ItemGroup>
+  <ItemGroup Condition="!$(DebugBuild)">
+    <o2 Include="$(Ud)dbgrpt.cpp" />
+    <o2 Include="$(Ud)dbgrptt.cpp" />
+    <o2 Include="$(U7)debug_heap.cpp" />
+    <o2 Include="$(U7)debug_heap_hook.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <_ Include="$(C2)*;$(C3)*;$(C4)*;$(C5)*" Exclude="@(o1)" />
+    <_ Include="$(U1)*;$(U2)*;$(U3)*;$(U4)*;$(U5)*;$(U6)*;$(U7)*;$(U8)*;$(U9)*;$(Ua)*;$(Ub)*;$(Uc)*;$(Ud)*;$(Ue)*;$(Uf)*;$(Ug)*;$(Uh)*;$(Ui)*" Exclude="@(o2)" />
+  </ItemGroup>
+  <Target Name="GetClCommandLines" Returns="@(ClCommandLines)" />
+  <Target Name="GetProjectDirectories" Returns="@(_ProjectDirectories)" />
+  <Target Name="GetGeneratedFiles" />
+  <Target Name="GetProjectReferencesInfo" />
+  <Target Name="GetAssemblyReferences" />
+  <Target Name="GetWinMDReferences" />
+  <Target Name="GetComReferences" />
+  <Target Name="GetSDKReferences" />
+  <Target Name="GetProjectReferences" />
+  <Target Name="GetForeignReferences" />
+  <Target Name="GetResolvedReferences" />
+  <Target Name="GetResolvedSDKReferences" />
+  <Target Name="Build" />
+  <Target Name="Rebuild" />
+  <Target Name="Clean" />
+</Project>

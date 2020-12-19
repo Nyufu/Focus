@@ -7,6 +7,12 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Focus", "Code\Focus.vcxproj
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "UnitTest", "UnitTest\UnitTest.vcxproj", "{5DA2A399-2027-4680-A422-D7A4C884D9C6}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "3rdParty", "3rdParty", "{A1628BFA-9C45-493E-BB02-75F038D94F59}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "MS", "MS", "{FE865150-EC94-4413-AA4C-8916D9A58737}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "UCRT", "3rdParty\MS\UCRT.vcxproj", "{3A1A4604-942C-4017-8099-645AB1305623}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -33,9 +39,18 @@ Global
 		{5DA2A399-2027-4680-A422-D7A4C884D9C6}.Optimize|x64.ActiveCfg = Debug|x64
 		{5DA2A399-2027-4680-A422-D7A4C884D9C6}.OptimizeClang|x64.ActiveCfg = Debug|x64
 		{5DA2A399-2027-4680-A422-D7A4C884D9C6}.Release|x64.ActiveCfg = Debug|x64
+		{3A1A4604-942C-4017-8099-645AB1305623}.Debug|x64.ActiveCfg = Debug|x64
+		{3A1A4604-942C-4017-8099-645AB1305623}.DebugClang|x64.ActiveCfg = DebugClang|x64
+		{3A1A4604-942C-4017-8099-645AB1305623}.Optimize|x64.ActiveCfg = Optimize|x64
+		{3A1A4604-942C-4017-8099-645AB1305623}.OptimizeClang|x64.ActiveCfg = OptimizeClang|x64
+		{3A1A4604-942C-4017-8099-645AB1305623}.Release|x64.ActiveCfg = Optimize|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{FE865150-EC94-4413-AA4C-8916D9A58737} = {A1628BFA-9C45-493E-BB02-75F038D94F59}
+		{3A1A4604-942C-4017-8099-645AB1305623} = {FE865150-EC94-4413-AA4C-8916D9A58737}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {A99190CB-63CF-494F-8067-03A16C6B2916}
