@@ -71,6 +71,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="IsTriviallyReturnable.cpp" />
     <ClCompile Include="Mock.cpp" />
   </ItemGroup>
   <ItemGroup>

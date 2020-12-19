@@ -189,6 +189,7 @@
     <ClCompile Include="Focus\Main.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="BaseLib\abi\x64.hxx" />
     <ClInclude Include="BaseLib\algorithm.hxx" />
     <ClInclude Include="BaseLib\assert.hxx" />
     <ClInclude Include="BaseLib\enum_helper.hxx" />

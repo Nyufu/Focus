@@ -42,6 +42,9 @@
     <ClInclude Include="Platform\WinNTEx.h">
       <Filter>Platform</Filter>
     </ClInclude>
+    <ClInclude Include="BaseLib\abi\x64.hxx">
+      <Filter>BaseLib\abi</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Focus">
@@ -61,6 +64,9 @@
     </Filter>
     <Filter Include="Platform">
       <UniqueIdentifier>{2b16a6d0-2106-4b39-bc0f-0d1c8567a00d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="BaseLib\abi">
+      <UniqueIdentifier>{50621e3d-658a-48d3-9a88-ac84fdfb4f65}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
