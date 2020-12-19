@@ -83,9 +83,9 @@
     <CodeAnalysisRuleSet>Focus.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <PropertyGroup>
-    <IncludePath>$(IncludePath);$(ThirdPartyDir)WinAPI;$(ThirdPartyDir)TBB\include;$(VLDDir);$(ThirdPartyDir)GSL\include</IncludePath>
-    <LibraryPath>$(LibraryPath);$(VLDDir);$(ThirdPartyDir)TBB\lib\intel64\vc14</LibraryPath>
-    <LocalDebuggerEnvironment>PATH=$(PATH);$(VLDDir);$(ThirdPartyDir)TBB\bin\intel64\vc14</LocalDebuggerEnvironment>
+    <IncludePath>$(IncludePath);$(ThirdPartyDir)WinAPI;$(ThirdPartyDir)TBB\include;$(VLDDir)include;$(ThirdPartyDir)GSL\include</IncludePath>
+    <LibraryPath>$(LibraryPath);$(VLDDir)lib;$(ThirdPartyDir)TBB\lib\intel64\vc14</LibraryPath>
+    <LocalDebuggerEnvironment>PATH=$(PATH);$(VLDDir)bin;$(ThirdPartyDir)TBB\bin\intel64\vc14</LocalDebuggerEnvironment>
     <ExcludePath>$(ExcludePath);$(ThirdPartyDir)</ExcludePath>
   </PropertyGroup>
   <ItemDefinitionGroup>
