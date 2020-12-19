@@ -36,6 +36,12 @@
     <ClInclude Include="Core\EngineConfig.hpp">
       <Filter>Core</Filter>
     </ClInclude>
+    <ClInclude Include="Core\Memory\Allocator\Heap.hpp">
+      <Filter>Core\Memory\Allocator</Filter>
+    </ClInclude>
+    <ClInclude Include="Platform\WinNTEx.h">
+      <Filter>Platform</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Focus">
@@ -46,6 +52,15 @@
     </Filter>
     <Filter Include="Core">
       <UniqueIdentifier>{e7847d81-d9b7-48c9-94a8-cd37bcd43aff}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Core\Memory">
+      <UniqueIdentifier>{d0c5c7f9-2e47-4aa2-952f-37f8ca2ffd48}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Core\Memory\Allocator">
+      <UniqueIdentifier>{bcae72a9-56da-43e7-9048-bc85bba97963}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Platform">
+      <UniqueIdentifier>{2b16a6d0-2106-4b39-bc0f-0d1c8567a00d}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

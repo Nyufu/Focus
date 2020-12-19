@@ -199,9 +199,11 @@
     <ClInclude Include="BaseLib\utility.hxx" />
     <ClInclude Include="Config.h" />
     <ClInclude Include="Core\EngineConfig.hpp" />
+    <ClInclude Include="Core\Memory\Allocator\Heap.hpp" />
     <ClInclude Include="Macros.h" />
     <ClInclude Include="NonVolatile.h" />
     <ClInclude Include="Platform.h" />
+    <ClInclude Include="Platform\WinNTEx.h" />
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="BaseLib\managed_object.natvis" />
