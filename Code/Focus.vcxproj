@@ -185,6 +185,7 @@
     <None Include="cpp.hint" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Core\EngineConfig.cpp" />
     <ClCompile Include="Focus\Main.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -197,6 +198,7 @@
     <ClInclude Include="BaseLib\type_traits.hxx" />
     <ClInclude Include="BaseLib\utility.hxx" />
     <ClInclude Include="Config.h" />
+    <ClInclude Include="Core\EngineConfig.hpp" />
     <ClInclude Include="Macros.h" />
     <ClInclude Include="NonVolatile.h" />
     <ClInclude Include="Platform.h" />

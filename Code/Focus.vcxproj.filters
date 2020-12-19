@@ -33,6 +33,9 @@
     <ClInclude Include="BaseLib\utility.hxx">
       <Filter>BaseLib</Filter>
     </ClInclude>
+    <ClInclude Include="Core\EngineConfig.hpp">
+      <Filter>Core</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Focus">
@@ -41,10 +44,16 @@
     <Filter Include="BaseLib">
       <UniqueIdentifier>{31e571f2-8233-4e58-a225-669241a18616}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Core">
+      <UniqueIdentifier>{e7847d81-d9b7-48c9-94a8-cd37bcd43aff}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Focus\Main.cpp">
       <Filter>Focus</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\EngineConfig.cpp">
+      <Filter>Core</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
