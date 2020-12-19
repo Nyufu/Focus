@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AutoVisualizer xmlns="http://schemas.microsoft.com/vstudio/debugger/natvis/2010">
+
+  <Type Name="stdex::managed_object &lt;*,*&gt;">
+    <SmartPointer Usage="Minimal">&amp;ptr->wrap.data</SmartPointer>
+    <DisplayString Condition="ptr == nullptr">empty</DisplayString>
+    <DisplayString Condition="ptr != nullptr">{ptr->wrap.data}</DisplayString>
+
+    <Expand HideRawView="true">
+      <Item Name="[uses]"  Condition="ptr != nullptr">ptr->uses</Item>
+      <Item Name="[value]" Condition="ptr != nullptr">ptr->wrap.data</Item>
+    </Expand>
+  </Type>
+
+</AutoVisualizer>

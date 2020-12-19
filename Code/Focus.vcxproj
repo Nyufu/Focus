@@ -188,10 +188,21 @@
     <ClCompile Include="Focus\Main.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="BaseLib\algorithm.hxx" />
+    <ClInclude Include="BaseLib\assert.hxx" />
+    <ClInclude Include="BaseLib\enum_helper.hxx" />
+    <ClInclude Include="BaseLib\managed_object.hxx" />
+    <ClInclude Include="BaseLib\trait_macros.hxx" />
+    <ClInclude Include="BaseLib\types.hxx" />
+    <ClInclude Include="BaseLib\type_traits.hxx" />
+    <ClInclude Include="BaseLib\utility.hxx" />
     <ClInclude Include="Config.h" />
     <ClInclude Include="Macros.h" />
     <ClInclude Include="NonVolatile.h" />
     <ClInclude Include="Platform.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Natvis Include="BaseLib\managed_object.natvis" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

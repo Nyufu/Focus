@@ -9,15 +9,47 @@
     <ClInclude Include="NonVolatile.h" />
     <ClInclude Include="Config.h" />
     <ClInclude Include="Macros.h" />
+    <ClInclude Include="BaseLib\algorithm.hxx">
+      <Filter>BaseLib</Filter>
+    </ClInclude>
+    <ClInclude Include="BaseLib\assert.hxx">
+      <Filter>BaseLib</Filter>
+    </ClInclude>
+    <ClInclude Include="BaseLib\enum_helper.hxx">
+      <Filter>BaseLib</Filter>
+    </ClInclude>
+    <ClInclude Include="BaseLib\managed_object.hxx">
+      <Filter>BaseLib</Filter>
+    </ClInclude>
+    <ClInclude Include="BaseLib\trait_macros.hxx">
+      <Filter>BaseLib</Filter>
+    </ClInclude>
+    <ClInclude Include="BaseLib\type_traits.hxx">
+      <Filter>BaseLib</Filter>
+    </ClInclude>
+    <ClInclude Include="BaseLib\types.hxx">
+      <Filter>BaseLib</Filter>
+    </ClInclude>
+    <ClInclude Include="BaseLib\utility.hxx">
+      <Filter>BaseLib</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Focus">
       <UniqueIdentifier>{1d976492-426e-4884-ae7f-b3ecd3ccf0ea}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="BaseLib">
+      <UniqueIdentifier>{31e571f2-8233-4e58-a225-669241a18616}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Focus\Main.cpp">
       <Filter>Focus</Filter>
     </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Natvis Include="BaseLib\managed_object.natvis">
+      <Filter>BaseLib</Filter>
+    </Natvis>
   </ItemGroup>
 </Project>

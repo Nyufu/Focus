@@ -2,6 +2,7 @@ DisableFormat: false
 BasedOnStyle: Microsoft              
 Standard: Latest
 IndentWidth: 4
+AccessModifierOffset: -4
 UseTab: Always
 ColumnLimit: 190
 MaxEmptyLinesToKeep: 2
