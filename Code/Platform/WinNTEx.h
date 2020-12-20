@@ -7,6 +7,8 @@ MSVC_WARNING_DISABLE(4201)
 #include <ntpebteb.h>
 WARNING_SCOPE_END
 
+// clang-format off
+
 #define GetPeb_()				(reinterpret_cast<PPEB >(__readgsqword(FIELD_OFFSET(TEB, ProcessEnvironmentBlock))))
 
 #if (defined (FAST_WINAPI_CALL) && FAST_WINAPI_CALL)

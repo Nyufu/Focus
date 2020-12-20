@@ -45,6 +45,21 @@
     <ClInclude Include="BaseLib\abi\x64.hxx">
       <Filter>BaseLib\abi</Filter>
     </ClInclude>
+    <ClInclude Include="Core\Concurrency\TaskParameters.hpp">
+      <Filter>Core\Concurrency</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Concurrency\_impl\FiberQueue.h">
+      <Filter>Core\Concurrency\_impl</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Concurrency\_impl\Scheduler\FiberBased.hpp">
+      <Filter>Core\Concurrency\_impl\Scheduler</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Concurrency\_impl\Scheduler\Interface.hpp">
+      <Filter>Core\Concurrency\_impl\Scheduler</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Concurrency\_impl\Fiber.hpp">
+      <Filter>Core\Concurrency\_impl</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Focus">
@@ -68,6 +83,15 @@
     <Filter Include="BaseLib\abi">
       <UniqueIdentifier>{50621e3d-658a-48d3-9a88-ac84fdfb4f65}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Core\Concurrency">
+      <UniqueIdentifier>{125f3f0b-5fd5-47db-86ae-a9bbcc902d50}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Core\Concurrency\_impl">
+      <UniqueIdentifier>{53cb6f15-eac5-4ea8-b24c-3da7501ae75e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Core\Concurrency\_impl\Scheduler">
+      <UniqueIdentifier>{9289f3af-d94c-4af3-afb6-63fc835147f1}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Focus\Main.cpp">
@@ -75,6 +99,12 @@
     </ClCompile>
     <ClCompile Include="Core\EngineConfig.cpp">
       <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Concurrency\_impl\Scheduler\FiberBased.cpp">
+      <Filter>Core\Concurrency\_impl\Scheduler</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Concurrency\_impl\Scheduler\Scheduler.cpp">
+      <Filter>Core\Concurrency\_impl\Scheduler</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

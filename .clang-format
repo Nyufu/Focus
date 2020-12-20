@@ -14,15 +14,7 @@ AlignEscapedNewlines: Left
 IndentPPDirectives: None
 FixNamespaceComments: false
 BreakConstructorInitializers: BeforeComma
-BreakBeforeBraces: Custom
-BraceWrapping:
-  AfterControlStatement: false
-  AfterStruct: false
-  AfterEnum: false
-  AfterClass: false
-  AfterFunction: false
-  AfterNamespace: false
-  BeforeElse: false
+BreakBeforeBraces: Attach
 
 AllowShortBlocksOnASingleLine: Never
 AllowShortCaseLabelsOnASingleLine : false
