@@ -98,6 +98,7 @@
       <PrecompiledHeaderFile>$(BuildToolsDir)pch.h</PrecompiledHeaderFile>
       <ForcedIncludeFiles>$(BuildToolsDir)pch.h</ForcedIncludeFiles>
       <ExceptionHandling>false</ExceptionHandling>
+      <EnableEnhancedInstructionSet>AdvancedVectorExtensions512</EnableEnhancedInstructionSet>
       <PreprocessorDefinitions>_ENABLE_EXTENDED_ALIGNED_STORAGE;_HAS_EXCEPTIONS=0;_CONSOLE;STD=::std::;STDEX=::stdex::;%(PreprocessorDefinitionss)</PreprocessorDefinitions>
       <MinimalRebuild />
     </ClCompile>
