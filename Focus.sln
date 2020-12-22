@@ -15,6 +15,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "UCRT", "3rdParty\MS\UCRT.vc
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		ASAN|x64 = ASAN|x64
 		Debug|x64 = Debug|x64
 		DebugClang|x64 = DebugClang|x64
 		Optimize|x64 = Optimize|x64
@@ -22,6 +23,8 @@ Global
 		Release|x64 = Release|x64
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{BF49F41C-CC26-4F95-8583-0AF820AD45C5}.ASAN|x64.ActiveCfg = ASAN|x64
+		{BF49F41C-CC26-4F95-8583-0AF820AD45C5}.ASAN|x64.Build.0 = ASAN|x64
 		{BF49F41C-CC26-4F95-8583-0AF820AD45C5}.Debug|x64.ActiveCfg = Debug|x64
 		{BF49F41C-CC26-4F95-8583-0AF820AD45C5}.Debug|x64.Build.0 = Debug|x64
 		{BF49F41C-CC26-4F95-8583-0AF820AD45C5}.DebugClang|x64.ActiveCfg = DebugClang|x64
@@ -32,6 +35,7 @@ Global
 		{BF49F41C-CC26-4F95-8583-0AF820AD45C5}.OptimizeClang|x64.Build.0 = OptimizeClang|x64
 		{BF49F41C-CC26-4F95-8583-0AF820AD45C5}.Release|x64.ActiveCfg = Release|x64
 		{BF49F41C-CC26-4F95-8583-0AF820AD45C5}.Release|x64.Build.0 = Release|x64
+		{5DA2A399-2027-4680-A422-D7A4C884D9C6}.ASAN|x64.ActiveCfg = Debug|x64
 		{5DA2A399-2027-4680-A422-D7A4C884D9C6}.Debug|x64.ActiveCfg = Debug|x64
 		{5DA2A399-2027-4680-A422-D7A4C884D9C6}.Debug|x64.Build.0 = Debug|x64
 		{5DA2A399-2027-4680-A422-D7A4C884D9C6}.DebugClang|x64.ActiveCfg = Debug|x64
@@ -39,6 +43,7 @@ Global
 		{5DA2A399-2027-4680-A422-D7A4C884D9C6}.Optimize|x64.ActiveCfg = Debug|x64
 		{5DA2A399-2027-4680-A422-D7A4C884D9C6}.OptimizeClang|x64.ActiveCfg = Debug|x64
 		{5DA2A399-2027-4680-A422-D7A4C884D9C6}.Release|x64.ActiveCfg = Debug|x64
+		{3A1A4604-942C-4017-8099-645AB1305623}.ASAN|x64.ActiveCfg = Optimize|x64
 		{3A1A4604-942C-4017-8099-645AB1305623}.Debug|x64.ActiveCfg = Debug|x64
 		{3A1A4604-942C-4017-8099-645AB1305623}.DebugClang|x64.ActiveCfg = DebugClang|x64
 		{3A1A4604-942C-4017-8099-645AB1305623}.Optimize|x64.ActiveCfg = Optimize|x64
