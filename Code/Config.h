@@ -4,7 +4,11 @@ namespace config {
 
 inline constexpr bool debug =
 #if defined(NDEBUG)
+#if defined(ASAN)
+	true;
+#else
 	false;
+#endif
 #else
 	true;
 #endif
