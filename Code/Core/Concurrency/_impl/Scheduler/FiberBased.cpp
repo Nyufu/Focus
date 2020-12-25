@@ -123,9 +123,7 @@ FiberBased::FiberBased()
 			const auto stackLimit = currentAddress + sizeOfGuardPage;
 			const auto preparedFiberStackAddress = currentAddress + stackSize - sizeof(Fiber);
 
-			const auto fiber = ::new (reinterpret_cast<void*>(preparedFiberStackAddress)) Fiber(stackLimit, stackType);
-
-			queue.Enqueue(stackType, fiber);
+			queue.EmplaceFreeFiber(reinterpret_cast<void*>(preparedFiberStackAddress), stackLimit, stackType);
 		}
 	}
 }

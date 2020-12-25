@@ -24,10 +24,12 @@ private:
 };
 
 inline Fiber* FiberBased::GetEmptyFiber(StackSize stackSize) {
-	Fiber* fiber = nullptr;
-	while (!queue.Dequeue(stackSize, fiber)) {
+	for (;;) {
+		auto fiber = queue.Acquire(stackSize);
+
+		if (fiber)
+			return fiber;
 	}
-	return fiber;
 }
 
 inline void FiberBased::ScheduleFiber([[maybe_unused]] Fiber* fiber, [[maybe_unused]] Priority priority) {

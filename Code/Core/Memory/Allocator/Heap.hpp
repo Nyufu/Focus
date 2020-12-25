@@ -6,7 +6,7 @@
 namespace Focus::Memory::Allocator {
 
 template <class _Ty>
-class Heap {
+struct Heap {
 public:
 	static_assert(!STD is_const_v<_Ty>, "The C++ Standard forbids containers of const elements "
 		"because Heap<const T> is ill-formed.");
