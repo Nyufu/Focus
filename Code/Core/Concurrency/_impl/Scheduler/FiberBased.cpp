@@ -67,8 +67,43 @@ DWORD Thread::Entry(void* arg) noexcept {
 
 // clang-format off
 
+namespace {
+
+constexpr STD array<StackSize, enum_count<StackSize>> stackTypes{
+	StackSize::Large,
+	StackSize::Medium,
+	StackSize::Small
+};
+
+}
+
 FiberBased::FiberBased()
-	: queue{ Config::Engine.taskQueue } {
+	: FiberBased(
+		  STDEX align(Config::Engine.taskQueue.large.taskCount  * sizeof(Fiber*), platform::cacheline_size, STDEX align_way::up) +
+		  STDEX align(Config::Engine.taskQueue.medium.taskCount * sizeof(Fiber*), platform::cacheline_size, STDEX align_way::up) +
+		  STDEX align(Config::Engine.taskQueue.small.taskCount  * sizeof(Fiber*), platform::cacheline_size, STDEX align_way::up)) {
+}
+
+FiberBased::FiberBased(size_t freeSetSize)
+	: queueBuffer{ Memory::Allocator::Heap<uint8_t>{}.allocate(
+		  platform::cacheline_size - platform::default_align + // The default_align is the default align by NT allocator on x64.
+		  freeSetSize +
+		  STD bit_ceil(STD max(Config::Engine.taskQueue.large.taskCount + Config::Engine.taskQueue.medium.taskCount + Config::Engine.taskQueue.small.taskCount, platform::registers_in_cacheline * platform::registers_in_cacheline)) * 3 * platform::register_size) }
+	, freeDesc{ FreeSetDescriptor{ Config::Engine.taskQueue.large.taskCount, queueBuffer },
+				FreeSetDescriptor{ Config::Engine.taskQueue.medium.taskCount, freeDesc[0] },
+				FreeSetDescriptor{ Config::Engine.taskQueue.small.taskCount, freeDesc[1] } }
+	, queueDesc{ QueueDescriptor{ STD bit_ceil(STD max(Config::Engine.taskQueue.large.taskCount + Config::Engine.taskQueue.medium.taskCount + Config::Engine.taskQueue.small.taskCount, platform::registers_in_cacheline * platform::registers_in_cacheline)), freeDesc[2] },
+				 QueueDescriptor{ queueDesc[0] },
+				 QueueDescriptor{ queueDesc[1] } } {
+
+	STD memset(freeDesc[0].storage, 0, freeSetSize);
+
+	const STD array<Fiber**, enum_count<StackSize>> freeSetIters{
+		freeDesc[0].storage,
+		freeDesc[1].storage,
+		freeDesc[2].storage
+	};
+
 	{
 		constexpr unsigned long long_max{ STD numeric_limits<long>::max() - 1 };
 		ASSERT(long_max > Config::Engine.numberOfThreads);
@@ -81,21 +116,15 @@ FiberBased::FiberBased()
 		Thread::Spawn(threadArgs);
 	}
 
-	constexpr STD array<StackSize, 3> stackTypes{
-		StackSize::Large,
-		StackSize::Medium,
-		StackSize::Small
-	};
-
 	const uint32_t sizeOfGuardPage = PageGuardUsed ? Config::SystemDefault.pageSize : 0;
 
-	const STD array<size_t, 3> stackSizes{
+	const STD array<size_t, enum_count<StackSize>> stackSizes{
 		Config::Engine.taskQueue.large.stackSize  ? STDEX align(Config::Engine.taskQueue.large.stackSize,  Config::SystemDefault.pageSize, STDEX align_way::up) + sizeOfGuardPage : 0,
 		Config::Engine.taskQueue.medium.stackSize ? STDEX align(Config::Engine.taskQueue.medium.stackSize, Config::SystemDefault.pageSize, STDEX align_way::up) + sizeOfGuardPage : 0,
 		Config::Engine.taskQueue.small.stackSize  ? STDEX align(Config::Engine.taskQueue.small.stackSize,  Config::SystemDefault.pageSize, STDEX align_way::up) + sizeOfGuardPage : 0
 	};
 
-	const STD array<size_t, 3> counts{
+	const STD array<size_t, enum_count<StackSize>> counts{
 		Config::Engine.taskQueue.large.taskCount,
 		Config::Engine.taskQueue.medium.taskCount,
 		Config::Engine.taskQueue.small.taskCount
@@ -109,12 +138,13 @@ FiberBased::FiberBased()
 	stackPoolPtr = ::VirtualAlloc(nullptr, stackPoolSize, MEM_COMMIT, PAGE_READWRITE);
 	ASSERT(stackPoolPtr);
 
-	for (auto stackTypeIndex = 0Ui64, currentAddress = reinterpret_cast<uintptr_t>(stackPoolPtr); stackTypeIndex < 3; stackTypeIndex++) {
+	for (auto stackTypeIndex = 0Ui64, currentAddress = reinterpret_cast<uintptr_t>(stackPoolPtr); stackTypeIndex < enum_count<StackSize>; stackTypeIndex++) {
 		const auto count = counts[stackTypeIndex];
 		const auto stackSize = stackSizes[stackTypeIndex];
 		const auto stackType = stackTypes[stackTypeIndex];
 
-		for (auto index = 0Ui64; index < count; index++, currentAddress += stackSize) {
+		auto freeSetIter = freeSetIters[stackTypeIndex];
+		for (auto index = 0Ui64; index < count; index++, currentAddress += stackSize, freeSetIter++) {
 			if constexpr (auto oldProtect = 0UL; PageGuardUsed) {
 				const auto result = ::VirtualProtect(reinterpret_cast<void*>(currentAddress), sizeOfGuardPage, PAGE_NOACCESS, &oldProtect);
 				ASSERT(result);
@@ -123,7 +153,7 @@ FiberBased::FiberBased()
 			const auto stackLimit = currentAddress + sizeOfGuardPage;
 			const auto preparedFiberStackAddress = currentAddress + stackSize - sizeof(Fiber);
 
-			queue.EmplaceFreeFiber(reinterpret_cast<void*>(preparedFiberStackAddress), stackLimit, stackType);
+			*freeSetIter = ::new (reinterpret_cast<void*>(preparedFiberStackAddress)) Fiber(stackLimit, stackType, freeSetIter);
 		}
 	}
 }
@@ -133,6 +163,7 @@ FiberBased::FiberBased()
 FiberBased::~FiberBased() {
 	const auto result = ::VirtualFree(stackPoolPtr, 0, MEM_RELEASE);
 	ASSERT(result);
+	Memory::Allocator::Heap<uint8_t>{}.deallocate(reinterpret_cast<uint8_t*>(queueBuffer), 1);
 }
 
 }
