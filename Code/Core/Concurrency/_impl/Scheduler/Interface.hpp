@@ -10,6 +10,8 @@ namespace Scheduler {
 
 Fiber* GetEmptyFiber(StackSize stackSize);
 void ScheduleFiber(Fiber* fiber, Priority priority);
+void ReleaseFiber(Fiber* fiber);
+
 
 }
 }

@@ -17,4 +17,9 @@ void ScheduleFiber(Fiber* fiber, Priority priority) {
 	instance.ScheduleFiber(fiber, priority);
 }
 
+void ReleaseFiber(Fiber* fiber) {
+	instance.ReleaseFiber(fiber);
+}
+
+
 }

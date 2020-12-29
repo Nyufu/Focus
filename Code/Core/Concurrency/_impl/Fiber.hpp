@@ -6,7 +6,7 @@
 namespace Focus::Concurrency::_impl {
 
 struct Fiber {
-	constexpr Fiber(register_t stackLimit, StackSize stackSize, Fiber** freeSetPlace) noexcept
+	constexpr Fiber(register_t stackLimit, StackSize stackSize, uint32_t* freeSetPlace) noexcept
 		: stackLimit{ stackLimit }
 		, stackSize{ stackSize }
 		, freeSetPlace{ freeSetPlace }
@@ -19,7 +19,7 @@ struct Fiber {
 
 	const StackSize stackSize;
 
-	Fiber** const freeSetPlace;
+	uint32_t* const freeSetPlace;
 
 	register_t stackPointer;
 };

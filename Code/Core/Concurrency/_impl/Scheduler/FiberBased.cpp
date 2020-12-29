@@ -3,7 +3,6 @@
 #include <algorithm.hxx>
 #include <managed_object.hxx>
 #include <Core/Concurrency/_impl/Fiber.hpp>
-#include <Core/Memory/Allocator/Heap.hpp>
 
 namespace Focus::Concurrency::_impl::Scheduler {
 
@@ -79,40 +78,47 @@ constexpr STD array<StackSize, enum_count<StackSize>> stackTypes{
 
 FiberBased::FiberBased()
 	: FiberBased(
-		  STDEX align(Config::Engine.taskQueue.large.taskCount  * sizeof(Fiber*), platform::cacheline_size, STDEX align_way::up) +
-		  STDEX align(Config::Engine.taskQueue.medium.taskCount * sizeof(Fiber*), platform::cacheline_size, STDEX align_way::up) +
-		  STDEX align(Config::Engine.taskQueue.small.taskCount  * sizeof(Fiber*), platform::cacheline_size, STDEX align_way::up)) {
+		  STDEX align(Config::Engine.taskQueue.large.taskCount * sizeof(FreeSetEntry), platform::cacheline_size, STDEX align_way::up),
+		  STDEX align(Config::Engine.taskQueue.medium.taskCount * sizeof(FreeSetEntry), platform::cacheline_size, STDEX align_way::up),
+		  STDEX align(Config::Engine.taskQueue.small.taskCount * sizeof(FreeSetEntry), platform::cacheline_size, STDEX align_way::up)) {
 }
 
-FiberBased::FiberBased(size_t freeSetSize)
-	: queueBuffer{ Memory::Allocator::Heap<uint8_t>{}.allocate(
-		  platform::cacheline_size - platform::default_align + // The default_align is the default align by NT allocator on x64.
-		  freeSetSize +
-		  STD bit_ceil(STD max(Config::Engine.taskQueue.large.taskCount + Config::Engine.taskQueue.medium.taskCount + Config::Engine.taskQueue.small.taskCount, platform::registers_in_cacheline * platform::registers_in_cacheline)) * 3 * platform::register_size) }
-	, freeDesc{ FreeSetDescriptor{ Config::Engine.taskQueue.large.taskCount, queueBuffer },
-				FreeSetDescriptor{ Config::Engine.taskQueue.medium.taskCount, freeDesc[0] },
-				FreeSetDescriptor{ Config::Engine.taskQueue.small.taskCount, freeDesc[1] } }
-	, queueDesc{ QueueDescriptor{ STD bit_ceil(STD max(Config::Engine.taskQueue.large.taskCount + Config::Engine.taskQueue.medium.taskCount + Config::Engine.taskQueue.small.taskCount, platform::registers_in_cacheline * platform::registers_in_cacheline)), freeDesc[2] },
+FiberBased::FiberBased(size_t largeSizeInBytes, size_t mediumSizeInBytes, size_t smallSizeInBytes)
+	: FiberBased(
+		  largeSizeInBytes, mediumSizeInBytes, smallSizeInBytes, largeSizeInBytes + mediumSizeInBytes + smallSizeInBytes,
+		  STD bit_ceil(STD max(
+			  Config::Engine.taskQueue.large.taskCount + Config::Engine.taskQueue.medium.taskCount + Config::Engine.taskQueue.small.taskCount,
+			  platform::registers_in_cacheline * platform::registers_in_cacheline)),
+		  [] {
+			  constexpr unsigned long long_max{ STD numeric_limits<long>::max() - 1 };
+			  ASSERT(long_max > Config::Engine.numberOfThreads);
+			  return Config::Engine.numberOfThreads;
+		  }()) {
+}
+
+
+FiberBased::FiberBased(size_t largeSizeInBytes, size_t mediumSizeInBytes, size_t smallSizeInBytes, size_t freeSetSizeInBytes, size_t queueSize, long numberOfThreads)
+	: allocator{}
+	, threadHandles(numberOfThreads)
+	, queueBuffer{ allocator.allocate(freeSetSizeInBytes + queueSize * 3 * platform::register_size +
+		platform::cacheline_size - platform::default_align) } // The default_align is the default align by NT allocator on x64.
+	, freeDesc{ FreeSetDescriptor{ mediumSizeInBytes, queueBuffer },
+				FreeSetDescriptor{ largeSizeInBytes, freeDesc[0] },
+				FreeSetDescriptor{ smallSizeInBytes, freeDesc[1] } }
+	, queueDesc{ QueueDescriptor{ queueSize, freeDesc[2] },
 				 QueueDescriptor{ queueDesc[0] },
 				 QueueDescriptor{ queueDesc[1] } } {
 
-	STD memset(freeDesc[0].storage, 0, freeSetSize);
+	STD memset(freeDesc[0].storage, 0, freeSetSizeInBytes);
 
-	const STD array<Fiber**, enum_count<StackSize>> freeSetIters{
+	const STD array<FreeSetEntry*, enum_count<StackSize>> freeSetIters{
 		freeDesc[0].storage,
 		freeDesc[1].storage,
 		freeDesc[2].storage
 	};
 
 	{
-		constexpr unsigned long long_max{ STD numeric_limits<long>::max() - 1 };
-		ASSERT(long_max > Config::Engine.numberOfThreads);
-		long numberOfThreads = Config::Engine.numberOfThreads;
-
-		threadHandles.resize(numberOfThreads);
-
 		ManagedThreadArgs threadArgs({ numberOfThreads + 1 }, this, nullptr, numberOfThreads);
-
 		Thread::Spawn(threadArgs);
 	}
 
@@ -153,7 +159,10 @@ FiberBased::FiberBased(size_t freeSetSize)
 			const auto stackLimit = currentAddress + sizeOfGuardPage;
 			const auto preparedFiberStackAddress = currentAddress + stackSize - sizeof(Fiber);
 
-			*freeSetIter = ::new (reinterpret_cast<void*>(preparedFiberStackAddress)) Fiber(stackLimit, stackType, freeSetIter);
+			::new (reinterpret_cast<void*>(preparedFiberStackAddress)) Fiber(stackLimit, stackType, freeSetIter);
+			ptrdiff_t offset = preparedFiberStackAddress - reinterpret_cast<uintptr_t>(stackPoolPtr);
+			ASSERT((offset & 0xFFFFFFFF00000000) == 0ll);
+			*freeSetIter = static_cast<uint32_t>(offset);
 		}
 	}
 }
@@ -163,7 +172,7 @@ FiberBased::FiberBased(size_t freeSetSize)
 FiberBased::~FiberBased() {
 	const auto result = ::VirtualFree(stackPoolPtr, 0, MEM_RELEASE);
 	ASSERT(result);
-	Memory::Allocator::Heap<uint8_t>{}.deallocate(reinterpret_cast<uint8_t*>(queueBuffer), 1);
+	allocator.deallocate(reinterpret_cast<uint8_t*>(queueBuffer), 1);
 }
 
 }

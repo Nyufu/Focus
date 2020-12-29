@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <array>
+#include <bit>
 #include <cassert>
 #include <cstddef>
 #include <cstdint>
@@ -18,3 +19,4 @@ using namespace STD chrono_literals;
 #include <Windows.h>
 
 #include <emmintrin.h>
+#include <immintrin.h>
