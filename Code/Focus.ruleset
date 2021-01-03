@@ -94,7 +94,6 @@
     <Rule Id="C26487" Action="Warning" />
     <Rule Id="C26488" Action="Warning" />
     <Rule Id="C26489" Action="Warning" />
-    <Rule Id="C26490" Action="Warning" />
     <Rule Id="C26491" Action="Warning" />
     <Rule Id="C26492" Action="Warning" />
     <Rule Id="C26493" Action="Warning" />

@@ -3,6 +3,7 @@
   <ItemGroup>
     <None Include="..\.clang-format" />
     <None Include="cpp.hint" />
+    <None Include="Focus.ruleset" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Platform.h" />
@@ -47,9 +48,6 @@
     </ClInclude>
     <ClInclude Include="Core\Concurrency\TaskParameters.hpp">
       <Filter>Core\Concurrency</Filter>
-    </ClInclude>
-    <ClInclude Include="Core\Concurrency\_impl\FiberQueue.h">
-      <Filter>Core\Concurrency\_impl</Filter>
     </ClInclude>
     <ClInclude Include="Core\Concurrency\_impl\Scheduler\FiberBased.hpp">
       <Filter>Core\Concurrency\_impl\Scheduler</Filter>

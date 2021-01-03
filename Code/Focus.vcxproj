@@ -119,6 +119,7 @@
       <MinimalRebuild />
     </ClCompile>
     <Link>
+      <AdditionalDependencies>Synchronization.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>DebugFastLink</GenerateDebugInformation>
     </Link>
@@ -216,6 +217,7 @@
   <ItemGroup>
     <None Include="..\.clang-format" />
     <None Include="cpp.hint" />
+    <None Include="Focus.ruleset" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Core\Concurrency\_impl\Scheduler\FiberBased.cpp" />
@@ -236,7 +238,6 @@
     <ClInclude Include="Config.h" />
     <ClInclude Include="Core\Concurrency\TaskParameters.hpp" />
     <ClInclude Include="Core\Concurrency\_impl\Fiber.hpp" />
-    <ClInclude Include="Core\Concurrency\_impl\FiberQueue.h" />
     <ClInclude Include="Core\Concurrency\_impl\Scheduler\FiberBased.hpp" />
     <ClInclude Include="Core\Concurrency\_impl\Scheduler\Interface.hpp" />
     <ClInclude Include="Core\EngineConfig.hpp" />

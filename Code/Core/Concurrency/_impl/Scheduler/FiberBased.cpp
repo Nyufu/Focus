@@ -2,7 +2,8 @@
 #include <assert.hxx>
 #include <algorithm.hxx>
 #include <managed_object.hxx>
-#include <Core/Concurrency/_impl/Fiber.hpp>
+#include <Core/EngineConfig.hpp>
+
 
 namespace Focus::Concurrency::_impl::Scheduler {
 
@@ -96,25 +97,44 @@ FiberBased::FiberBased(size_t largeSizeInBytes, size_t mediumSizeInBytes, size_t
 		  }()) {
 }
 
+WARNING_SCOPE_BEGIN
+CLANG_WARNING_DISABLE("-Wuninitialized") // Elements of freeDescs already used while still initializing.
 
 FiberBased::FiberBased(size_t largeSizeInBytes, size_t mediumSizeInBytes, size_t smallSizeInBytes, size_t freeSetSizeInBytes, size_t queueSize, long numberOfThreads)
 	: allocator{}
 	, threadHandles(numberOfThreads)
 	, queueBuffer{ allocator.allocate(freeSetSizeInBytes + queueSize * 3 * platform::register_size +
 		platform::cacheline_size - platform::default_align) } // The default_align is the default align by NT allocator on x64.
-	, freeDesc{ FreeSetDescriptor{ mediumSizeInBytes, queueBuffer },
-				FreeSetDescriptor{ largeSizeInBytes, freeDesc[0] },
-				FreeSetDescriptor{ smallSizeInBytes, freeDesc[1] } }
-	, queueDesc{ QueueDescriptor{ queueSize, freeDesc[2] },
-				 QueueDescriptor{ queueDesc[0] },
-				 QueueDescriptor{ queueDesc[1] } } {
+	, freeDescs{ 
+		FreeSetDescriptor{ mediumSizeInBytes, queueBuffer },
+		FreeSetDescriptor{ largeSizeInBytes, freeDescs[0] },
+		FreeSetDescriptor{ smallSizeInBytes, freeDescs[1] } }
+	, queueDesc{ queueSize }
+	, queues{ [&] {
+		STD remove_const_t<decltype(queues)> _queues;
+		_queues[0] = reinterpret_cast<QueueEntry*>(STDEX align(freeDescs[2].ustorage + freeDescs[2].size, platform::cacheline_size, STDEX align_way::up));
+		_queues[1] = reinterpret_cast<QueueEntry*>(
+			STDEX align(reinterpret_cast<uintptr_t>(_queues[0]) + (queueDesc.GetSize() * platform::register_size), platform::cacheline_size, STDEX align_way::up));
+		_queues[2] = reinterpret_cast<QueueEntry*>(
+			STDEX align(reinterpret_cast<uintptr_t>(_queues[1]) + (queueDesc.GetSize() * platform::register_size), platform::cacheline_size, STDEX align_way::up));
+		return _queues;
+	}() }
+	, queueControls{} {
+	Init(freeSetSizeInBytes, numberOfThreads);
+}
 
-	STD memset(freeDesc[0].storage, 0, freeSetSizeInBytes);
+WARNING_SCOPE_END
+
+void FiberBased::Init(size_t freeSetSizeInBytes, long numberOfThreads) {
+	STD memset(freeDescs[0].storage, 0, freeSetSizeInBytes);
+	STD memset(queues[0], 0xFF, queueDesc.GetSize() * sizeof(QueueEntry));
+	STD memset(queues[1], 0xFF, queueDesc.GetSize() * sizeof(QueueEntry));
+	STD memset(queues[2], 0xFF, queueDesc.GetSize() * sizeof(QueueEntry));
 
 	const STD array<FreeSetEntry*, enum_count<StackSize>> freeSetIters{
-		freeDesc[0].storage,
-		freeDesc[1].storage,
-		freeDesc[2].storage
+		freeDescs[0].storage,
+		freeDescs[1].storage,
+		freeDescs[2].storage
 	};
 
 	{
@@ -172,7 +192,24 @@ FiberBased::FiberBased(size_t largeSizeInBytes, size_t mediumSizeInBytes, size_t
 FiberBased::~FiberBased() {
 	const auto result = ::VirtualFree(stackPoolPtr, 0, MEM_RELEASE);
 	ASSERT(result);
-	allocator.deallocate(reinterpret_cast<uint8_t*>(queueBuffer), 1);
+	allocator.deallocate(static_cast<uint8_t*>(queueBuffer), 1);
+}
+
+void FiberBased::QueueControl::Signal() noexcept {
+	WakeByAddressSingle(STD addressof(head));
+}
+
+__declspec(noinline) uint64_t FiberBased::QueueControl::WaitForTail(const QueueEntry& targetPosition, const uint64_t redBlackBit) noexcept {
+	auto localHead = head.load();
+	if ((reinterpret_cast<uintptr_t>(targetPosition) & 1) == redBlackBit) {
+		waitCounter++;
+
+		WaitOnAddress(reinterpret_cast<volatile void*>(STD addressof(head)), &localHead, sizeof(localHead), INFINITE);
+
+		waitCounter--;
+	}
+
+	return tail;
 }
 
 }
