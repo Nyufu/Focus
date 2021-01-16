@@ -103,20 +103,22 @@ CLANG_WARNING_DISABLE("-Wuninitialized") // Elements of freeDescs already used w
 FiberBased::FiberBased(size_t largeSizeInBytes, size_t mediumSizeInBytes, size_t smallSizeInBytes, size_t freeSetSizeInBytes, size_t queueSize, long numberOfThreads)
 	: allocator{}
 	, threadHandles(numberOfThreads)
-	, queueBuffer{ allocator.allocate(freeSetSizeInBytes + queueSize * 3 * platform::register_size +
+	, queueBuffer{ allocator.allocate(freeSetSizeInBytes + queueSize * enum_count<Priority> * platform::register_size +
 		platform::cacheline_size - platform::default_align) } // The default_align is the default align by NT allocator on x64.
-	, freeDescs{ 
-		FreeSetDescriptor{ mediumSizeInBytes, queueBuffer },
-		FreeSetDescriptor{ largeSizeInBytes, freeDescs[0] },
-		FreeSetDescriptor{ smallSizeInBytes, freeDescs[1] } }
+	, freePoolSizesInBytes{ mediumSizeInBytes, largeSizeInBytes, smallSizeInBytes }
+	, freePools{
+		reinterpret_cast<FreeSetEntry*>(STDEX align(reinterpret_cast<uintptr_t>(queueBuffer), platform::cacheline_size, STDEX align_way::up)),
+		reinterpret_cast<FreeSetEntry*>(STDEX align(reinterpret_cast<uintptr_t>(freePools[0]) + freePoolSizesInBytes[0], platform::cacheline_size, STDEX align_way::up)),
+		reinterpret_cast<FreeSetEntry*>(STDEX align(reinterpret_cast<uintptr_t>(freePools[1]) + freePoolSizesInBytes[1], platform::cacheline_size, STDEX align_way::up)) }
 	, queueDesc{ queueSize }
 	, queues{ [&] {
 		STD remove_const_t<decltype(queues)> _queues;
-		_queues[0] = reinterpret_cast<QueueEntry*>(STDEX align(freeDescs[2].ustorage + freeDescs[2].size, platform::cacheline_size, STDEX align_way::up));
+		_queues[0] = reinterpret_cast<QueueEntry*>(
+			STDEX align(reinterpret_cast<uintptr_t>(freePools[2]) + freePoolSizesInBytes[2], platform::cacheline_size, STDEX align_way::up));
 		_queues[1] = reinterpret_cast<QueueEntry*>(
-			STDEX align(reinterpret_cast<uintptr_t>(_queues[0]) + (queueDesc.GetSize() * platform::register_size), platform::cacheline_size, STDEX align_way::up));
+			STDEX align(reinterpret_cast<uintptr_t>(_queues[0]) + (queueDesc.GetSize() * sizeof(QueueEntry)), platform::cacheline_size, STDEX align_way::up));
 		_queues[2] = reinterpret_cast<QueueEntry*>(
-			STDEX align(reinterpret_cast<uintptr_t>(_queues[1]) + (queueDesc.GetSize() * platform::register_size), platform::cacheline_size, STDEX align_way::up));
+			STDEX align(reinterpret_cast<uintptr_t>(_queues[1]) + (queueDesc.GetSize() * sizeof(QueueEntry)), platform::cacheline_size, STDEX align_way::up));
 		return _queues;
 	}() }
 	, queueControls{} {
@@ -126,15 +128,13 @@ FiberBased::FiberBased(size_t largeSizeInBytes, size_t mediumSizeInBytes, size_t
 WARNING_SCOPE_END
 
 void FiberBased::Init(size_t freeSetSizeInBytes, long numberOfThreads) {
-	STD memset(freeDescs[0].storage, 0, freeSetSizeInBytes);
-	STD memset(queues[0], 0xFF, queueDesc.GetSize() * sizeof(QueueEntry));
-	STD memset(queues[1], 0xFF, queueDesc.GetSize() * sizeof(QueueEntry));
-	STD memset(queues[2], 0xFF, queueDesc.GetSize() * sizeof(QueueEntry));
+	STD memset(freePools[0], 0, freeSetSizeInBytes);
+	STD memset(queues[0], 0xFF, queueDesc.GetSize() * enum_count<Priority> * sizeof(QueueEntry));
 
 	const STD array<FreeSetEntry*, enum_count<StackSize>> freeSetIters{
-		freeDescs[0].storage,
-		freeDescs[1].storage,
-		freeDescs[2].storage
+		freePools[0],
+		freePools[1],
+		freePools[2]
 	};
 
 	{

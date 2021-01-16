@@ -1,19 +1,20 @@
 #pragma once
 
+#include <types.hxx>
 #include <enum_helper.hxx>
 
 namespace Focus::Concurrency {
 
 inline namespace TaskParameter {
 
-enum class StackSize : uint8_t
+enum class StackSize : register_t
 {
 	Medium = 0,
 	Large,
 	Small
 };
 
-enum class Priority : uint8_t
+enum class Priority : register_t
 {
 	Normal = 0,
 	High,

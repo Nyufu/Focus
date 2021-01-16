@@ -21,24 +21,6 @@ private:
 	using QueueEntry = Fiber*;
 	using FreeSetEntry = uint32_t;
 
-	struct FreeSetDescriptor {
-		const uint64_t size;
-		union {
-			FreeSetEntry* const storage;
-			const uintptr_t ustorage;
-		};
-
-		FreeSetDescriptor(uint64_t size, void* const memory) noexcept
-			: size{ size }
-			, ustorage{ STDEX align(reinterpret_cast<uintptr_t>(memory), platform::cacheline_size, STDEX align_way::up) } {
-		}
-
-		FreeSetDescriptor(uint64_t size, const FreeSetDescriptor& desc) noexcept
-			: size{ size }
-			, ustorage{ STDEX align(desc.ustorage + desc.size, platform::cacheline_size, STDEX align_way::up) } {
-		}
-	};
-
 	struct QueueDescriptor {
 		const uint64_t capacityMask;
 
@@ -92,7 +74,8 @@ private:
 
 	alignas(platform::cacheline_size) void* stackPoolPtr;
 
-	STD array<FreeSetDescriptor, enum_count<StackSize>> freeDescs;
+	const STD array<uint64_t, enum_count<StackSize>> freePoolSizesInBytes;
+	const STD array<FreeSetEntry*, enum_count<StackSize>> freePools;
 
 	alignas(platform::cacheline_size) QueueDescriptor queueDesc;
 	const STD array<QueueEntry*, enum_count<Priority>> queues;
@@ -106,13 +89,11 @@ inline Fiber* FiberBased::GetEmptyFiber(StackSize stackSize) noexcept {
 	//_mm_prefetch(reinterpret_cast<const char*>(STD addressof(freeDescs)), _MM_HINT_NTA);
 
 	const auto zero = _mm256_setzero_si256();
-	// const auto random = (reinterpret_cast<uintptr_t>(_AddressOfReturnAddress()) - 0x28) << 2;
-	const auto random = (reinterpret_cast<uintptr_t>(_AddressOfReturnAddress()) & 0xFFFFFFFFFFFFFFC0);
+	const auto random = _readgsbase_u64();
 
-	auto& desc = freeDescs[STDEX to_num(stackSize)];
-	const auto size = desc.size;
+	const auto size = freePoolSizesInBytes[STDEX to_num(stackSize)];
 	ASSERT((size & 0x000000000000003f) == 0ull);
-	const auto storage = reinterpret_cast<uintptr_t>(desc.storage);
+	const auto storage = reinterpret_cast<uintptr_t>(freePools[STDEX to_num(stackSize)]);
 
 	ptrdiff_t offset = random % size;
 	const auto startPoint = STD assume_aligned<platform::cacheline_size>(reinterpret_cast<__m256i*>(storage + offset));
@@ -120,7 +101,7 @@ inline Fiber* FiberBased::GetEmptyFiber(StackSize stackSize) noexcept {
 	for (auto it = startPoint;;) {
 		const uint32_t mask = _mm256_movemask_epi8(_mm256_cmpeq_epi32(*it, zero));
 		if (mask != 0xFFFFFFFF) {
-			const auto targetOffset = STD countr_zero(~mask);
+			const auto targetOffset = STD countr_one(mask);
 			const auto targetPtr = reinterpret_cast<FreeSetEntry volatile*>(reinterpret_cast<uintptr_t>(it) + targetOffset);
 			const auto fiberOffset = _InterlockedExchange(targetPtr, 0ul);
 			if (fiberOffset == 0u)
@@ -129,7 +110,8 @@ inline Fiber* FiberBased::GetEmptyFiber(StackSize stackSize) noexcept {
 			return reinterpret_cast<Fiber*>(reinterpret_cast<uintptr_t>(stackPoolPtr) + fiberOffset);
 		}
 
-		offset = (offset + sizeof(__m256i)) % size;
+		const auto incremented = offset + sizeof(__m256i);
+		offset = incremented >= size ? incremented - size : incremented;
 		it = STD assume_aligned<sizeof(__m256i)>(reinterpret_cast<__m256i*>(storage + offset));
 		if (startPoint == it) {
 			return nullptr; // There is no free fiber, need to finish one from the queue.
