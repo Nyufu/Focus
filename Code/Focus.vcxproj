@@ -131,6 +131,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;__CLANG__=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <DiagnosticsFormat>Caret</DiagnosticsFormat>
+      <AdditionalOptions>-mavx2 -mfsgsbase %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <MASM>
       <PreprocessorDefinitions>_DEBUG</PreprocessorDefinitions>
@@ -157,6 +158,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;__CLANG__=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalOptions>-mavx2 -mfsgsbase %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
