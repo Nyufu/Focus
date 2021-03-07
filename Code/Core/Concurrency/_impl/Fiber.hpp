@@ -6,22 +6,19 @@
 namespace Focus::Concurrency::_impl {
 
 struct Fiber {
-	constexpr Fiber(register_t stackLimit, StackSize stackSize, uint32_t* freeSetPlace) noexcept
-		: stackLimit{ stackLimit }
-		, stackSize{ stackSize }
-		, freeSetPlace{ freeSetPlace }
-		, stackPointer{ 0 } {
-	}
+	struct Impl {
+		// The value of this is the stack limit,
+		// the address of this is the stack bottom.
+		const register_t stackLimit;
 
-	// The value of this is the stack limit,
-	// the address of this is the stack bottom.
-	const register_t stackLimit;
+		const StackSize stackSize;
 
-	const StackSize stackSize;
+		uint32_t* const freeSetPlace;
 
-	uint32_t* const freeSetPlace;
-
-	register_t stackPointer;
+		register_t stackPointer = 0;
+	};
 };
+
+struct FiberImpl : Fiber::Impl, Fiber {};
 
 }

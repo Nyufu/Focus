@@ -2,6 +2,7 @@
 
 #include <types.hxx>
 #include <enum_helper.hxx>
+#include <Platform.h>
 
 namespace Focus::Concurrency {
 
@@ -17,8 +18,8 @@ enum class StackSize : register_t
 enum class Priority : register_t
 {
 	Normal = 0,
-	High,
-	Low
+	High = Normal + platform::register_size,
+	Low = High + platform::register_size
 };
 
 }

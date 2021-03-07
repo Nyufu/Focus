@@ -79,9 +79,9 @@ constexpr STD array<StackSize, enum_count<StackSize>> stackTypes{
 
 FiberBased::FiberBased()
 	: FiberBased(
-		  STDEX align(Config::Engine.taskQueue.large.taskCount * sizeof(FreeSetEntry), platform::cacheline_size, STDEX align_way::up),
+		  STDEX align(Config::Engine.taskQueue.large.taskCount  * sizeof(FreeSetEntry), platform::cacheline_size, STDEX align_way::up),
 		  STDEX align(Config::Engine.taskQueue.medium.taskCount * sizeof(FreeSetEntry), platform::cacheline_size, STDEX align_way::up),
-		  STDEX align(Config::Engine.taskQueue.small.taskCount * sizeof(FreeSetEntry), platform::cacheline_size, STDEX align_way::up)) {
+		  STDEX align(Config::Engine.taskQueue.small.taskCount  * sizeof(FreeSetEntry), platform::cacheline_size, STDEX align_way::up)) {
 }
 
 FiberBased::FiberBased(size_t largeSizeInBytes, size_t mediumSizeInBytes, size_t smallSizeInBytes)
@@ -98,7 +98,7 @@ FiberBased::FiberBased(size_t largeSizeInBytes, size_t mediumSizeInBytes, size_t
 }
 
 WARNING_SCOPE_BEGIN
-CLANG_WARNING_DISABLE("-Wuninitialized") // Elements of freeDescs already used while still initializing.
+CLANG_WARNING_DISABLE("-Wuninitialized") // Elements of freePools already used while still initializing.
 
 FiberBased::FiberBased(size_t largeSizeInBytes, size_t mediumSizeInBytes, size_t smallSizeInBytes, size_t freeSetSizeInBytes, size_t queueSize, long numberOfThreads)
 	: allocator{}
@@ -107,21 +107,20 @@ FiberBased::FiberBased(size_t largeSizeInBytes, size_t mediumSizeInBytes, size_t
 		platform::cacheline_size - platform::default_align) } // The default_align is the default align by NT allocator on x64.
 	, freePoolSizesInBytes{ mediumSizeInBytes, largeSizeInBytes, smallSizeInBytes }
 	, freePools{
-		reinterpret_cast<FreeSetEntry*>(STDEX align(reinterpret_cast<uintptr_t>(queueBuffer), platform::cacheline_size, STDEX align_way::up)),
+		reinterpret_cast<FreeSetEntry*>(STDEX align(reinterpret_cast<uintptr_t>(queueBuffer)                           , platform::cacheline_size, STDEX align_way::up)),
 		reinterpret_cast<FreeSetEntry*>(STDEX align(reinterpret_cast<uintptr_t>(freePools[0]) + freePoolSizesInBytes[0], platform::cacheline_size, STDEX align_way::up)),
 		reinterpret_cast<FreeSetEntry*>(STDEX align(reinterpret_cast<uintptr_t>(freePools[1]) + freePoolSizesInBytes[1], platform::cacheline_size, STDEX align_way::up)) }
 	, queueDesc{ queueSize }
 	, queues{ [&] {
 		STD remove_const_t<decltype(queues)> _queues;
-		_queues[0] = reinterpret_cast<QueueEntry*>(
-			STDEX align(reinterpret_cast<uintptr_t>(freePools[2]) + freePoolSizesInBytes[2], platform::cacheline_size, STDEX align_way::up));
-		_queues[1] = reinterpret_cast<QueueEntry*>(
-			STDEX align(reinterpret_cast<uintptr_t>(_queues[0]) + (queueDesc.GetSize() * sizeof(QueueEntry)), platform::cacheline_size, STDEX align_way::up));
-		_queues[2] = reinterpret_cast<QueueEntry*>(
-			STDEX align(reinterpret_cast<uintptr_t>(_queues[1]) + (queueDesc.GetSize() * sizeof(QueueEntry)), platform::cacheline_size, STDEX align_way::up));
+		_queues[0] = reinterpret_cast<Fiber**>(
+			STDEX align(reinterpret_cast<uintptr_t>(freePools[2]) + freePoolSizesInBytes[2]             , platform::cacheline_size, STDEX align_way::up));
+		_queues[1] = reinterpret_cast<Fiber**>(
+			STDEX align(reinterpret_cast<uintptr_t>(_queues[0]) + (queueDesc.GetSize() * sizeof(Fiber*)), platform::cacheline_size, STDEX align_way::up));
+		_queues[2] = reinterpret_cast<Fiber**>(
+			STDEX align(reinterpret_cast<uintptr_t>(_queues[1]) + (queueDesc.GetSize() * sizeof(Fiber*)), platform::cacheline_size, STDEX align_way::up));
 		return _queues;
-	}() }
-	, queueControls{} {
+	}() } {
 	Init(freeSetSizeInBytes, numberOfThreads);
 }
 
@@ -129,7 +128,7 @@ WARNING_SCOPE_END
 
 void FiberBased::Init(size_t freeSetSizeInBytes, long numberOfThreads) {
 	STD memset(freePools[0], 0, freeSetSizeInBytes);
-	STD memset(queues[0], 0xFF, queueDesc.GetSize() * enum_count<Priority> * sizeof(QueueEntry));
+	STD memset(queues[0], 0x01, queueDesc.GetSize() * enum_count<Priority> * platform::register_size);
 
 	const STD array<FreeSetEntry*, enum_count<StackSize>> freeSetIters{
 		freePools[0],
@@ -177,10 +176,10 @@ void FiberBased::Init(size_t freeSetSizeInBytes, long numberOfThreads) {
 			}
 
 			const auto stackLimit = currentAddress + sizeOfGuardPage;
-			const auto preparedFiberStackAddress = currentAddress + stackSize - sizeof(Fiber);
+			const auto preparedFiberStackAddress = currentAddress + stackSize - sizeof(FiberImpl);
 
-			::new (reinterpret_cast<void*>(preparedFiberStackAddress)) Fiber(stackLimit, stackType, freeSetIter);
-			ptrdiff_t offset = preparedFiberStackAddress - reinterpret_cast<uintptr_t>(stackPoolPtr);
+			::new (reinterpret_cast<void*>(preparedFiberStackAddress)) FiberImpl{{stackLimit, stackType, freeSetIter}};
+			ptrdiff_t offset = preparedFiberStackAddress + sizeof(FiberImpl) - reinterpret_cast<uintptr_t>(stackPoolPtr);
 			ASSERT((offset & 0xFFFFFFFF00000000) == 0ll);
 			*freeSetIter = static_cast<uint32_t>(offset);
 		}
@@ -195,21 +194,22 @@ FiberBased::~FiberBased() {
 	allocator.deallocate(static_cast<uint8_t*>(queueBuffer), 1);
 }
 
-void FiberBased::QueueControl::Signal() noexcept {
-	WakeByAddressSingle(STD addressof(head));
+void FiberBased::Signal() noexcept {
+	waitCounter.fetch_add(0x100, STD memory_order::release);
+	WakeByAddressSingle(STD addressof(waitCounter));
 }
 
-__declspec(noinline) uint64_t FiberBased::QueueControl::WaitForTail(const QueueEntry& targetPosition, const uint64_t redBlackBit) noexcept {
-	auto localHead = head.load();
-	if ((reinterpret_cast<uintptr_t>(targetPosition) & 1) == redBlackBit) {
-		waitCounter++;
+//__declspec(noinline)
+uint64_t FiberBased::WaitForTail(const STD atomic_uint64_t& tail, const FiberPtr& valueRef, uintptr_t currentValue) noexcept {
+	auto counterValue = waitCounter.fetch_add(1, STD memory_order::acquire) + 1;
 
-		WaitOnAddress(reinterpret_cast<volatile void*>(STD addressof(head)), &localHead, sizeof(localHead), INFINITE);
+	const auto newValue = reinterpret_cast<uintptr_t>(valueRef);
+	if (newValue == currentValue)
+		WaitOnAddress(reinterpret_cast<volatile void*>(STD addressof(waitCounter)), &counterValue, sizeof(counterValue), INFINITE);
 
-		waitCounter--;
-	}
+	waitCounter.fetch_sub(1, STD memory_order::relaxed);
 
-	return tail;
+	return tail.load(STD memory_order::relaxed);
 }
 
 }
