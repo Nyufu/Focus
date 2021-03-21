@@ -11,7 +11,6 @@ namespace Scheduler {
 Fiber* GetEmptyFiber(StackSize stackSize) noexcept;
 void ScheduleFiber(Fiber* fiber, Priority priority) noexcept;
 void ReleaseFiber(Fiber* fiber) noexcept;
-Fiber* GetReadyFiber(Priority priority) noexcept;
 
 }
 }

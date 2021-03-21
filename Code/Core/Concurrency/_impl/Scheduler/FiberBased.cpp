@@ -84,7 +84,7 @@ FiberBased::FiberBased()
 		  STDEX align(Config::Engine.taskQueue.small.taskCount  * sizeof(FreeSetEntry), platform::cacheline_size, STDEX align_way::up)) {
 }
 
-FiberBased::FiberBased(size_t largeSizeInBytes, size_t mediumSizeInBytes, size_t smallSizeInBytes)
+__forceinline FiberBased::FiberBased(size_t largeSizeInBytes, size_t mediumSizeInBytes, size_t smallSizeInBytes)
 	: FiberBased(
 		  largeSizeInBytes, mediumSizeInBytes, smallSizeInBytes, largeSizeInBytes + mediumSizeInBytes + smallSizeInBytes,
 		  STD bit_ceil(STD max(
@@ -97,14 +97,17 @@ FiberBased::FiberBased(size_t largeSizeInBytes, size_t mediumSizeInBytes, size_t
 		  }()) {
 }
 
+__forceinline FiberBased::FiberBased(size_t largeSizeInBytes, size_t mediumSizeInBytes, size_t smallSizeInBytes, size_t freeSetSizeInBytes, size_t queueSize, long numberOfThreads)
+	: FiberBased(largeSizeInBytes, mediumSizeInBytes, smallSizeInBytes, freeSetSizeInBytes, queueSize, queueSize * enum_count<Priority> * platform::register_size, numberOfThreads) {
+}
+
 WARNING_SCOPE_BEGIN
 CLANG_WARNING_DISABLE("-Wuninitialized") // Elements of freePools already used while still initializing.
 
-FiberBased::FiberBased(size_t largeSizeInBytes, size_t mediumSizeInBytes, size_t smallSizeInBytes, size_t freeSetSizeInBytes, size_t queueSize, long numberOfThreads)
+__forceinline FiberBased::FiberBased(size_t largeSizeInBytes, size_t mediumSizeInBytes, size_t smallSizeInBytes, size_t freeSetSizeInBytes, size_t queueSize, size_t queueSizeInBytes, long numberOfThreads)
 	: allocator{}
 	, threadHandles(numberOfThreads)
-	, queueBuffer{ allocator.allocate(freeSetSizeInBytes + queueSize * enum_count<Priority> * platform::register_size +
-		platform::cacheline_size - platform::default_align) } // The default_align is the default align by NT allocator on x64.
+	, queueBuffer{ allocator.allocate(freeSetSizeInBytes + queueSizeInBytes + platform::cacheline_size - platform::default_align) } // The default_align is the default align by NT allocator on x64.
 	, freePoolSizesInBytes{ mediumSizeInBytes, largeSizeInBytes, smallSizeInBytes }
 	, freePools{
 		reinterpret_cast<FreeSetEntry*>(STDEX align(reinterpret_cast<uintptr_t>(queueBuffer)                           , platform::cacheline_size, STDEX align_way::up)),
@@ -121,14 +124,14 @@ FiberBased::FiberBased(size_t largeSizeInBytes, size_t mediumSizeInBytes, size_t
 			STDEX align(reinterpret_cast<uintptr_t>(_queues[1]) + (queueDesc.GetSize() * sizeof(Fiber*)), platform::cacheline_size, STDEX align_way::up));
 		return _queues;
 	}() } {
-	Init(freeSetSizeInBytes, numberOfThreads);
+	Init(freeSetSizeInBytes, queueSizeInBytes, numberOfThreads);
 }
 
 WARNING_SCOPE_END
 
-void FiberBased::Init(size_t freeSetSizeInBytes, long numberOfThreads) {
+__forceinline void FiberBased::Init(size_t freeSetSizeInBytes, size_t queueSizeInBytes, long numberOfThreads) {
 	STD memset(freePools[0], 0, freeSetSizeInBytes);
-	STD memset(queues[0], 0x01, queueDesc.GetSize() * enum_count<Priority> * platform::register_size);
+	STD memset(queues[0], 0x01, queueSizeInBytes);
 
 	const STD array<FreeSetEntry*, enum_count<StackSize>> freeSetIters{
 		freePools[0],

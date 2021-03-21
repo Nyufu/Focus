@@ -21,8 +21,4 @@ void ReleaseFiber(Fiber* fiber) noexcept {
 	instance.ReleaseFiber(fiber);
 }
 
-Fiber* GetReadyFiber(Priority priority) noexcept {
-	return instance.GetReadyFiber(priority);
-}
-
 }

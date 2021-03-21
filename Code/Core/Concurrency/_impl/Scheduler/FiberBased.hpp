@@ -50,8 +50,6 @@ public:
 public:
 	ONLY_CONSTRUCT(FiberBased);
 	FiberBased();
-	FiberBased(size_t largeSizeInBytes, size_t mediumSizeInBytes, size_t smallSizeInBytes);
-	FiberBased(size_t largeSizeInBytes, size_t mediumSizeInBytes, size_t smallSizeInBytes, size_t freeSetSizeInBytes, size_t queueSize, long numberOfThreads);
 	~FiberBased();
 
 	FiberPtr GetEmptyFiber(StackSize stackSize) noexcept;
@@ -60,7 +58,11 @@ public:
 	FiberPtr GetReadyFiber(Priority priority) noexcept;
 
 private:
-	void Init(size_t freeSetSizeInBytes, long numberOfThreads);
+	FiberBased(size_t largeSizeInBytes, size_t mediumSizeInBytes, size_t smallSizeInBytes);
+	FiberBased(size_t largeSizeInBytes, size_t mediumSizeInBytes, size_t smallSizeInBytes, size_t freeSetSizeInBytes, size_t queueSize, long numberOfThreads);
+	FiberBased(size_t largeSizeInBytes, size_t mediumSizeInBytes, size_t smallSizeInBytes, size_t freeSetSizeInBytes, size_t queueSize, size_t queueSizeInBytes, long numberOfThreads);
+
+	void Init(size_t freeSetSizeInBytes, size_t queueSizeInBytes, long numberOfThreads);
 
 	void Signal() noexcept;
 	uint64_t WaitForTail(const STD atomic_uint64_t& tail, const FiberPtr& targetPosition, uintptr_t currentValue) noexcept;
