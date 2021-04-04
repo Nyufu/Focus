@@ -239,7 +239,11 @@
     <ClInclude Include="BaseLib\type_traits.hxx" />
     <ClInclude Include="BaseLib\utility.hxx" />
     <ClInclude Include="Config.h" />
+    <ClInclude Include="Core\Concurrency\Task.hpp" />
     <ClInclude Include="Core\Concurrency\TaskParameters.hpp" />
+    <ClInclude Include="Core\Concurrency\_impl\CommonHeaders.hpp" />
+    <ClInclude Include="Core\Concurrency\_impl\CreateTask.inl" />
+    <ClInclude Include="Core\Concurrency\_impl\CreateTaskHelper_EDG.inl" />
     <ClInclude Include="Core\Concurrency\_impl\Fiber.hpp" />
     <ClInclude Include="Core\Concurrency\_impl\Scheduler\FiberBased.hpp" />
     <ClInclude Include="Core\Concurrency\_impl\Scheduler\Interface.hpp" />

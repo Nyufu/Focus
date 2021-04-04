@@ -58,6 +58,18 @@
     <ClInclude Include="Core\Concurrency\_impl\Fiber.hpp">
       <Filter>Core\Concurrency\_impl</Filter>
     </ClInclude>
+    <ClInclude Include="Core\Concurrency\_impl\CommonHeaders.hpp">
+      <Filter>Core\Concurrency\_impl</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Concurrency\Task.hpp">
+      <Filter>Core\Concurrency</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Concurrency\_impl\CreateTaskHelper_EDG.inl">
+      <Filter>Core\Concurrency\_impl</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Concurrency\_impl\CreateTask.inl">
+      <Filter>Core\Concurrency\_impl</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Focus">
