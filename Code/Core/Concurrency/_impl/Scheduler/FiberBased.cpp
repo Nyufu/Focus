@@ -62,9 +62,12 @@ void Thread::Spawn(ManagedThreadArgs& threadArgs) noexcept {
 DWORD Thread::Entry(void* arg) noexcept {
 	const Thread threadInfo{ arg };
 
+	threadInfo.scheduler->ExecuteScheduler();
+
 	return 0;
 }
 
+#pragma region FiberBased_Constructor
 // clang-format off
 
 namespace {
@@ -190,6 +193,7 @@ __forceinline void FiberBased::Init(size_t freeSetSizeInBytes, size_t queueSizeI
 }
 
 // clang-format on
+#pragma endregion
 
 FiberBased::~FiberBased() {
 	const auto result = ::VirtualFree(stackPoolPtr, 0, MEM_RELEASE);
@@ -198,21 +202,69 @@ FiberBased::~FiberBased() {
 }
 
 void FiberBased::Signal() noexcept {
-	waitCounter.fetch_add(0x100, STD memory_order::release);
-	WakeByAddressSingle(STD addressof(waitCounter));
+	for (uint64_t localCounter = waitCounter.load(STD memory_order::relaxed);;) {
+		if (!static_cast<uint8_t>(localCounter)) [[likely]]
+			return;
+		if (waitCounter.compare_exchange_strong(localCounter, localCounter - 0x0000000100000001)) {
+			WakeByAddressSingle(STD addressof(waitCounter));
+			return;
+		}
+	}
 }
 
-//__declspec(noinline)
-uint64_t FiberBased::WaitForTail(const STD atomic_uint64_t& tail, const FiberPtr& valueRef, uintptr_t currentValue) noexcept {
-	auto counterValue = waitCounter.fetch_add(1, STD memory_order::acquire) + 1;
+__forceinline void FiberBased::ExecuteScheduler() noexcept {
+	struct TailState {
+		FiberPtr fiber;
+		FiberPtr* place;
+	};
 
-	const auto newValue = reinterpret_cast<uintptr_t>(valueRef);
-	if (newValue == currentValue)
-		WaitOnAddress(reinterpret_cast<volatile void*>(STD addressof(waitCounter)), &counterValue, sizeof(counterValue), INFINITE);
+	static constexpr STD array<Priority, enum_count<Priority>> priorities = { Priority::High, Priority::Normal, Priority::Normal };
 
-	waitCounter.fetch_sub(1, STD memory_order::relaxed);
+	const auto mask = queueDesc.GetMask();
+	const auto redBlackMask = queueDesc.GetRedBlackMask();
 
-	return tail.load(STD memory_order::relaxed);
+	for (;;) {
+		STD array<TailState, enum_count<Priority>> tailStates;
+		auto it = tailStates.begin();
+
+		for (Priority prio : priorities) {
+			auto& tail = GetValue(tails, prio);
+			const auto queue = GetValue(queues, prio);
+
+		RETRY:
+			auto currentTail = tail.load(STD memory_order::relaxed);
+			auto& valueRef = queue[currentTail & mask];
+			const auto currentValue = reinterpret_cast<uintptr_t>(valueRef);
+			const auto redBlackBit = static_cast<uint8_t>(currentValue);
+			const uint8_t target = currentTail & redBlackMask ? 1 : 0;
+			const auto nextTail = currentTail + 1;
+			const auto fiber = reinterpret_cast<FiberPtr>(currentValue & 0xFFFFFFFFFFFFFF00);
+
+			if (target == redBlackBit) {
+				if (tail.compare_exchange_strong(currentTail, nextTail)) {
+					ExecuteFiber(fiber);
+					ReleaseFiber(fiber);
+					break;
+				}
+				goto RETRY;
+			}
+
+			it->fiber = valueRef;
+			it->place = STD addressof(valueRef);
+			it++;
+		}
+
+		// STD atomic_thread_fence(STD memory_order::seq_cst);
+
+		if (const auto& a = tailStates[0], &b = tailStates[1], &c = tailStates[2]; a.fiber == *a.place || b.fiber == *b.place || c.fiber == *c.place) {
+			auto counterValue = waitCounter.fetch_add(1, STD memory_order::acquire) + 1;
+			WaitOnAddress(reinterpret_cast<volatile void*>(STD addressof(waitCounter)), &counterValue, sizeof(counterValue), INFINITE);
+		}
+	}
+}
+
+void FiberBased::ExecuteFiber(FiberPtr /*fiber*/) noexcept {
+	puts("asd");
 }
 
 }

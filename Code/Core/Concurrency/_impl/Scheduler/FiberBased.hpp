@@ -55,7 +55,6 @@ public:
 	FiberPtr GetEmptyFiber(StackSize stackSize) noexcept;
 	void ReleaseFiber(FiberPtr fiber) noexcept;
 	void ScheduleFiber(FiberPtr fiber, Priority priority);
-	FiberPtr GetReadyFiber(Priority priority) noexcept;
 
 private:
 	FiberBased(size_t largeSizeInBytes, size_t mediumSizeInBytes, size_t smallSizeInBytes);
@@ -65,7 +64,9 @@ private:
 	void Init(size_t freeSetSizeInBytes, size_t queueSizeInBytes, long numberOfThreads);
 
 	void Signal() noexcept;
-	uint64_t WaitForTail(const STD atomic_uint64_t& tail, const FiberPtr& targetPosition, uintptr_t currentValue) noexcept;
+
+	void ExecuteScheduler() noexcept;
+	void ExecuteFiber(FiberPtr fiber) noexcept;
 
 private:
 	//[[no_unique_address]]
@@ -85,7 +86,7 @@ private:
 	STD array<AlignedValue, enum_count<Priority>> heads;
 	STD array<AlignedValue, enum_count<Priority>> tails;
 
-	alignas(platform::cacheline_size) STD atomic_int64_t waitCounter;
+	alignas(platform::cacheline_size) STD atomic_uint64_t waitCounter;
 
 private:
 	static FiberPtr* GetValue(const STD array<FiberPtr*, enum_count<Priority>>& array, Priority priority) noexcept {
@@ -156,29 +157,7 @@ inline void FiberBased::ScheduleFiber(FiberPtr fiber, Priority priority) {
 	auto ptr = STD assume_aligned<256>(fiber);
 	queue[targetIndex & mask] = reinterpret_cast<FiberPtr>(reinterpret_cast<uintptr_t>(ptr) | redBlackBit);
 
-	if (static_cast<uint8_t>(waitCounter.load(STD memory_order::relaxed))) [[unlikely]]
-		Signal();
+	Signal();
 }
 
-inline FiberBased::FiberPtr FiberBased::GetReadyFiber(Priority priority) noexcept {
-	auto& tail = GetValue(tails, priority);
-	const auto queue = GetValue(queues, priority);
-	const auto mask = queueDesc.GetMask();
-	const auto redBlackMask = queueDesc.GetRedBlackMask();
-
-	for (auto currentTail = tail.load(STD memory_order::relaxed);;) {
-		auto& valueRef = queue[currentTail & mask];
-		const auto currentValue = reinterpret_cast<uintptr_t>(valueRef);
-		const auto redBlackBit = static_cast<uint8_t>(currentValue);
-		const uint8_t target = currentTail & redBlackMask ? 1 : 0;
-
-		if (target ^ redBlackBit) [[unlikely]] {
-			currentTail = WaitForTail(tail, valueRef, currentValue);
-			continue;
-		}
-
-		if (tail.compare_exchange_strong(currentTail, currentTail + 1))
-			return reinterpret_cast<FiberPtr>(currentValue & 0xFFFFFFFFFFFFFF00);
-	}
-}
 }
