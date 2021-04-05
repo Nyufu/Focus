@@ -247,6 +247,7 @@
     <ClInclude Include="Core\Concurrency\_impl\Fiber.hpp" />
     <ClInclude Include="Core\Concurrency\_impl\Scheduler\FiberBased.hpp" />
     <ClInclude Include="Core\Concurrency\_impl\Scheduler\Interface.hpp" />
+    <ClInclude Include="Core\Concurrency\_impl\TaskParameterSeparator.hpp" />
     <ClInclude Include="Core\EngineConfig.hpp" />
     <ClInclude Include="Core\Memory\Allocator\Heap.hpp" />
     <ClInclude Include="Macros.h" />

@@ -70,6 +70,9 @@
     <ClInclude Include="Core\Concurrency\_impl\CreateTask.inl">
       <Filter>Core\Concurrency\_impl</Filter>
     </ClInclude>
+    <ClInclude Include="Core\Concurrency\_impl\TaskParameterSeparator.hpp">
+      <Filter>Core\Concurrency\_impl</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Focus">
