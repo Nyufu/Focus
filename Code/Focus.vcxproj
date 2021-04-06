@@ -258,6 +258,9 @@
   <ItemGroup>
     <Natvis Include="BaseLib\managed_object.natvis" />
   </ItemGroup>
+  <ItemGroup>
+    <MASM Include="Core\Concurrency\_impl\Fiber.asm" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
     <Import Project="$(VCTargetsPath)\BuildCustomizations\masm.targets" />

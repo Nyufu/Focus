@@ -23,4 +23,7 @@ struct Fiber : FiberImpl, FiberImpl::FiberHandleT {};
 
 using FiberHandle = FiberImpl::FiberHandleT*;
 
+extern "C" void FiberInitializer(void);
+extern "C" void SwitchToFocusFiber(Fiber*);
+
 }

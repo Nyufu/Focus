@@ -243,7 +243,6 @@ __forceinline void FiberBased::ExecuteScheduler() noexcept {
 				if (tail.compare_exchange_strong(currentTail, nextTail)) {
 					const auto fiber = static_cast<FiberPtr>(reinterpret_cast<FiberHandle>(currentValue & 0xFFFFFFFFFFFFFF00));
 					ExecuteFiber(fiber);
-					ReleaseFiber(fiber);
 					break;
 				}
 				goto RETRY;
@@ -263,8 +262,9 @@ __forceinline void FiberBased::ExecuteScheduler() noexcept {
 	}
 }
 
-void FiberBased::ExecuteFiber(FiberPtr /*fiber*/) noexcept {
-	puts("asd");
+void FiberBased::ExecuteFiber(FiberPtr fiber) noexcept {
+	SwitchToFocusFiber(fiber);
+	ReleaseFiber(fiber);
 }
 
 }
