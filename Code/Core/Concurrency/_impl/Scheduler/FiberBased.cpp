@@ -119,12 +119,12 @@ __forceinline FiberBased::FiberBased(size_t largeSizeInBytes, size_t mediumSizeI
 	, queueDesc{ queueSize }
 	, queues{ [&] {
 		STD remove_const_t<decltype(queues)> _queues;
-		_queues[0] = reinterpret_cast<Fiber**>(
-			STDEX align(reinterpret_cast<uintptr_t>(freePools[2]) + freePoolSizesInBytes[2]             , platform::cacheline_size, STDEX align_way::up));
-		_queues[1] = reinterpret_cast<Fiber**>(
-			STDEX align(reinterpret_cast<uintptr_t>(_queues[0]) + (queueDesc.GetSize() * sizeof(Fiber*)), platform::cacheline_size, STDEX align_way::up));
-		_queues[2] = reinterpret_cast<Fiber**>(
-			STDEX align(reinterpret_cast<uintptr_t>(_queues[1]) + (queueDesc.GetSize() * sizeof(Fiber*)), platform::cacheline_size, STDEX align_way::up));
+		_queues[0] = reinterpret_cast<FiberHandle*>(
+			STDEX align(reinterpret_cast<uintptr_t>(freePools[2]) + freePoolSizesInBytes[2]                  , platform::cacheline_size, STDEX align_way::up));
+		_queues[1] = reinterpret_cast<FiberHandle*>(
+			STDEX align(reinterpret_cast<uintptr_t>(_queues[0]) + (queueDesc.GetSize() * sizeof(FiberHandle)), platform::cacheline_size, STDEX align_way::up));
+		_queues[2] = reinterpret_cast<FiberHandle*>(
+			STDEX align(reinterpret_cast<uintptr_t>(_queues[1]) + (queueDesc.GetSize() * sizeof(FiberHandle)), platform::cacheline_size, STDEX align_way::up));
 		return _queues;
 	}() } {
 	Init(freeSetSizeInBytes, queueSizeInBytes, numberOfThreads);
@@ -184,7 +184,7 @@ __forceinline void FiberBased::Init(size_t freeSetSizeInBytes, size_t queueSizeI
 			const auto stackLimit = currentAddress + sizeOfGuardPage;
 			const auto preparedFiberStackAddress = currentAddress + stackSize - sizeof(FiberImpl);
 
-			::new (reinterpret_cast<void*>(preparedFiberStackAddress)) FiberImpl{{stackLimit, stackType, freeSetIter}};
+			::new (reinterpret_cast<void*>(preparedFiberStackAddress)) FiberImpl{stackLimit, stackType, freeSetIter};
 			ptrdiff_t offset = preparedFiberStackAddress + sizeof(FiberImpl) - reinterpret_cast<uintptr_t>(stackPoolPtr);
 			ASSERT((offset & 0xFFFFFFFF00000000) == 0ll);
 			*freeSetIter = static_cast<uint32_t>(offset);
@@ -214,8 +214,8 @@ void FiberBased::Signal() noexcept {
 
 __forceinline void FiberBased::ExecuteScheduler() noexcept {
 	struct TailState {
-		FiberPtr fiber;
-		FiberPtr* place;
+		FiberHandle handle;
+		FiberHandle* address;
 	};
 
 	static constexpr STD array<Priority, enum_count<Priority>> priorities = { Priority::High, Priority::Normal, Priority::Normal };
@@ -224,7 +224,7 @@ __forceinline void FiberBased::ExecuteScheduler() noexcept {
 	const auto redBlackMask = queueDesc.GetRedBlackMask();
 
 	for (;;) {
-		STD array<TailState, enum_count<Priority>> tailStates;
+		STD array<TailState, enum_count<Priority>> tailStates{};
 		auto it = tailStates.begin();
 
 		for (Priority prio : priorities) {
@@ -238,10 +238,10 @@ __forceinline void FiberBased::ExecuteScheduler() noexcept {
 			const auto redBlackBit = static_cast<uint8_t>(currentValue);
 			const uint8_t target = currentTail & redBlackMask ? 1 : 0;
 			const auto nextTail = currentTail + 1;
-			const auto fiber = reinterpret_cast<FiberPtr>(currentValue & 0xFFFFFFFFFFFFFF00);
 
 			if (target == redBlackBit) {
 				if (tail.compare_exchange_strong(currentTail, nextTail)) {
+					const auto fiber = static_cast<FiberPtr>(reinterpret_cast<FiberHandle>(currentValue & 0xFFFFFFFFFFFFFF00));
 					ExecuteFiber(fiber);
 					ReleaseFiber(fiber);
 					break;
@@ -249,14 +249,14 @@ __forceinline void FiberBased::ExecuteScheduler() noexcept {
 				goto RETRY;
 			}
 
-			it->fiber = valueRef;
-			it->place = STD addressof(valueRef);
+			it->handle = valueRef;
+			it->address = STD addressof(valueRef);
 			it++;
 		}
 
 		// STD atomic_thread_fence(STD memory_order::seq_cst);
 
-		if (const auto& a = tailStates[0], &b = tailStates[1], &c = tailStates[2]; a.fiber == *a.place || b.fiber == *b.place || c.fiber == *c.place) {
+		if (const auto& a = tailStates[0], &b = tailStates[1], &c = tailStates[2]; a.handle == *a.address || b.handle == *b.address || c.handle == *c.address) {
 			auto counterValue = waitCounter.fetch_add(1, STD memory_order::acquire) + 1;
 			WaitOnAddress(reinterpret_cast<volatile void*>(STD addressof(waitCounter)), &counterValue, sizeof(counterValue), INFINITE);
 		}

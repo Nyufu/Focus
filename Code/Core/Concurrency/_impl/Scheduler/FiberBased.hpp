@@ -81,7 +81,7 @@ private:
 	const STD array<FreeSetEntry*, enum_count<StackSize>> freePools;
 
 	alignas(platform::cacheline_size) QueueDescriptor queueDesc;
-	const STD array<FiberPtr*, enum_count<Priority>> queues;
+	const STD array<FiberHandle*, enum_count<Priority>> queues;
 
 	STD array<AlignedValue, enum_count<Priority>> heads;
 	STD array<AlignedValue, enum_count<Priority>> tails;
@@ -89,9 +89,9 @@ private:
 	alignas(platform::cacheline_size) STD atomic_uint64_t waitCounter;
 
 private:
-	static FiberPtr* GetValue(const STD array<FiberPtr*, enum_count<Priority>>& array, Priority priority) noexcept {
+	static FiberHandle* GetValue(const STD array<FiberHandle*, enum_count<Priority>>& array, Priority priority) noexcept {
 		const auto offset = STDEX to_num(priority);
-		return *reinterpret_cast<FiberPtr* const*>(reinterpret_cast<const uint8_t*>(array.data()) + offset);
+		return *reinterpret_cast<FiberHandle* const*>(reinterpret_cast<const uint8_t*>(array.data()) + offset);
 	}
 
 	static STD atomic_uint64_t& GetValue(STD array<AlignedValue, enum_count<Priority>>& array, Priority priority) noexcept {
@@ -125,7 +125,7 @@ inline FiberBased::FiberPtr FiberBased::GetEmptyFiber(StackSize stackSize) noexc
 			if (fiberOffset == 0u)
 				continue;
 
-			return reinterpret_cast<FiberPtr>(reinterpret_cast<uintptr_t>(stackPoolPtr) + fiberOffset);
+			return static_cast<FiberPtr>(reinterpret_cast<FiberHandle>(reinterpret_cast<uintptr_t>(stackPoolPtr) + fiberOffset));
 		}
 
 		const auto incremented = offset + sizeof(__m256i);
@@ -138,10 +138,10 @@ inline FiberBased::FiberPtr FiberBased::GetEmptyFiber(StackSize stackSize) noexc
 }
 
 inline void FiberBased::ReleaseFiber(FiberPtr fiber) noexcept {
-	auto impl = static_cast<FiberImpl*>(fiber);
-	ASSERT(impl->freeSetPlace);
-	ASSERT(!*impl->freeSetPlace);
-	*impl->freeSetPlace = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(fiber) - reinterpret_cast<uintptr_t>(stackPoolPtr));
+	auto handle = static_cast<FiberHandle>(fiber);
+	ASSERT(fiber->freeSetPlace);
+	ASSERT(!*fiber->freeSetPlace);
+	*fiber->freeSetPlace = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(handle) - reinterpret_cast<uintptr_t>(stackPoolPtr));
 }
 
 inline void FiberBased::ScheduleFiber(FiberPtr fiber, Priority priority) {
@@ -154,8 +154,9 @@ inline void FiberBased::ScheduleFiber(FiberPtr fiber, Priority priority) {
 	const auto redBlackMask = queueDesc.GetRedBlackMask();
 	const uint8_t redBlackBit = targetIndex & redBlackMask ? 1 : 0;
 
-	auto ptr = STD assume_aligned<256>(fiber);
-	queue[targetIndex & mask] = reinterpret_cast<FiberPtr>(reinterpret_cast<uintptr_t>(ptr) | redBlackBit);
+	auto handle = static_cast<FiberHandle>(fiber);
+	auto ptr = STD assume_aligned<256>(handle);
+	queue[targetIndex & mask] = reinterpret_cast<FiberHandle>(reinterpret_cast<uintptr_t>(ptr) | redBlackBit);
 
 	Signal();
 }

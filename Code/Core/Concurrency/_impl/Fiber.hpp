@@ -5,20 +5,22 @@
 
 namespace Focus::Concurrency::_impl {
 
-struct Fiber {
-	struct Impl {
-		// The value of this is the stack limit,
-		// the address of this is the stack bottom.
-		const register_t stackLimit;
+struct FiberImpl {
+	// The value of this is the stack limit,
+	// the address of this is the stack bottom.
+	const register_t stackLimit;
 
-		const StackSize stackSize;
+	const StackSize stackSize;
 
-		uint32_t* const freeSetPlace;
+	uint32_t* const freeSetPlace;
 
-		register_t stackPointer = 0;
-	};
+	register_t stackPointer = 0;
+
+	struct FiberHandleT {};
 };
 
-struct FiberImpl : Fiber::Impl, Fiber {};
+struct Fiber : FiberImpl, FiberImpl::FiberHandleT {};
+
+using FiberHandle = FiberImpl::FiberHandleT*;
 
 }
