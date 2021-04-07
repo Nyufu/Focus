@@ -218,7 +218,7 @@ __forceinline void FiberBased::ExecuteScheduler() noexcept {
 		FiberHandle* address;
 	};
 
-	static constexpr STD array<Priority, enum_count<Priority>> priorities = { Priority::High, Priority::Normal, Priority::Normal };
+	static constexpr STD array<Priority, enum_count<Priority>> priorities = { Priority::High, Priority::Normal, Priority::Low };
 
 	const auto mask = queueDesc.GetMask();
 	const auto redBlackMask = queueDesc.GetRedBlackMask();
