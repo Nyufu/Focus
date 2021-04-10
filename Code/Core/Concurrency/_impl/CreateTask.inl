@@ -504,7 +504,7 @@ struct TaskTraits<Callable, STDEX type_list<Args...>> {
 	static_assert(abi::x64::is_definable_return_policy_v<ReturnTy>, "");
 
 	static constexpr Focus::Concurrency::Task<ReturnTy> CreateTask(
-		Callable&& callable, Args&&... args, const StackSize stackSize = Default::StackSize, [[maybe_unused]] const Priority priority = Default::Priority) {
+		Callable&& callable, Args&&... args, const StackSize stackSize = Default::StackSize, const Priority priority = Default::Priority) {
 		auto* const fiber = Scheduler::GetEmptyFiber(stackSize);
 		ASSERT(fiber);
 

@@ -138,9 +138,10 @@ inline FiberBased::FiberPtr FiberBased::GetEmptyFiber(StackSize stackSize) noexc
 }
 
 inline void FiberBased::ReleaseFiber(FiberPtr fiber) noexcept {
-	auto handle = static_cast<FiberHandle>(fiber);
+	ASSERT(fiber);
 	ASSERT(fiber->freeSetPlace);
 	ASSERT(!*fiber->freeSetPlace);
+	auto handle = STD assume_aligned<256>(static_cast<FiberHandle>(fiber));
 	*fiber->freeSetPlace = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(handle) - reinterpret_cast<uintptr_t>(stackPoolPtr));
 }
 
