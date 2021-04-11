@@ -20,3 +20,5 @@ using namespace STD chrono_literals;
 
 #include <emmintrin.h>
 #include <immintrin.h>
+
+#include <fastrange.h>

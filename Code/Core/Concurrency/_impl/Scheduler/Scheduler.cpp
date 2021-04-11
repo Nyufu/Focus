@@ -9,16 +9,16 @@ namespace Focus::Concurrency::_impl::Scheduler {
 
 static FiberBased instance;
 
-Fiber* GetEmptyFiber(StackSize stackSize) noexcept {
+FiberHandle GetEmptyFiber(StackSize stackSize) noexcept {
 	return instance.GetEmptyFiber(stackSize);
 }
 
-void ScheduleFiber(Fiber* fiber, Priority priority) noexcept {
-	instance.ScheduleFiber(fiber, priority);
+void ScheduleFiber(FiberHandle handle, Priority priority) noexcept {
+	instance.ScheduleFiber(handle, priority);
 }
 
-void ReleaseFiber(Fiber* fiber) noexcept {
-	instance.ReleaseFiber(fiber);
+void ReleaseFiber(FiberHandle handle) noexcept {
+	instance.ReleaseFiber(handle);
 }
 
 }

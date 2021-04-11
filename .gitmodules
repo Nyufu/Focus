@@ -1,3 +1,6 @@
 [submodule "3rdParty/GSL"]
 	path = 3rdParty/GSL
 	url = https://github.com/microsoft/GSL.git
+[submodule "3rdParty/fastrange"]
+	path = 3rdParty/fastrange
+	url = https://github.com/lemire/fastrange.git

@@ -98,7 +98,7 @@
     <CodeAnalysisRuleSet>Focus.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <PropertyGroup>
-    <IncludePath>$(IncludePath);$(ThirdPartyDir)WinAPI;$(ThirdPartyDir)TBB\include;$(VLDDir)include;$(ThirdPartyDir)GSL\include</IncludePath>
+    <IncludePath>$(IncludePath);$(ThirdPartyDir)WinAPI;$(ThirdPartyDir)TBB\include;$(VLDDir)include;$(ThirdPartyDir)GSL\include;$(ThirdPartyDir)fastrange</IncludePath>
     <LibraryPath>$(LibraryPath);$(VLDDir)lib;$(ThirdPartyDir)TBB\lib\intel64\vc14</LibraryPath>
     <PATH>$(PATH);$(VLDDir)bin;$(ThirdPartyDir)TBB\bin\intel64\vc14</PATH>
     <LocalDebuggerEnvironment>PATH=$(PATH)</LocalDebuggerEnvironment>

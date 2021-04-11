@@ -1,16 +1,15 @@
 #pragma once
 
 #include <Core/Concurrency/TaskParameters.hpp>
+#include <Core/Concurrency/_impl/Fiber.hpp>
 
 namespace Focus::Concurrency::_impl {
 
-struct Fiber;
-
 namespace Scheduler {
 
-Fiber* GetEmptyFiber(StackSize stackSize) noexcept;
-void ScheduleFiber(Fiber* fiber, Priority priority) noexcept;
-void ReleaseFiber(Fiber* fiber) noexcept;
+FiberHandle GetEmptyFiber(StackSize stackSize) noexcept;
+void ScheduleFiber(FiberHandle fiberHandle, Priority priority) noexcept;
+void ReleaseFiber(FiberHandle fiberHandle) noexcept;
 
 }
 }

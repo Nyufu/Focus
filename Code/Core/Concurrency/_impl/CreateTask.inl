@@ -273,7 +273,7 @@ struct TasksCallStack<ReturnTy __cdecl(FunctionArgs...), InputArgs...> {
 	static_assert(sizeof...(FunctionArgs) == sizeof...(InputArgs));
 
 	template <class FunctionPtrTy>
-	static constexpr void Create(Fiber* const fiber, FunctionPtrTy functionPtr, InputArgs&&... input) {
+	static constexpr void Create(FiberHandle const handle, FunctionPtrTy functionPtr, InputArgs&&... input) {
 		using namespace CDecl;
 
 		static_assert(sizeof(FunctionPtrTy) == platform::register_size);
@@ -286,7 +286,8 @@ struct TasksCallStack<ReturnTy __cdecl(FunctionArgs...), InputArgs...> {
 
 		using TaskCaller = typename TaskCallerDomain::TaskCaller;
 
-		auto* taskCallerDomain = static_cast<TaskCallerDomain*>(fiber);
+		auto* fiber = static_cast<Fiber*>(handle);
+		auto* taskCallerDomain = static_cast<TaskCallerDomain*>(handle);
 		GSL_ASSUME(taskCallerDomain);
 		ASSERT((reinterpret_cast<uintptr_t>(taskCallerDomain) & 0x0F) == 0); // stack must be aligned on a 16-byte boundary
 
@@ -328,7 +329,7 @@ struct TasksCallStack<ReturnTy __cdecl(FunctionArgs...) noexcept, InputArgs...> 
 template <class ReturnTy, class ObjectTy, class... FunctionArgs, class InputArg0, class... InputArgs>
 struct TasksCallStack<ReturnTy (__cdecl ObjectTy::*)(FunctionArgs...), InputArg0, InputArgs...> {
 	template <class FunctionPtrTy>
-	static constexpr void Create(Fiber* const fiber, FunctionPtrTy functionPtr, InputArg0&& input0, InputArgs&&... input) {
+	static constexpr void Create(FiberHandle const handle, FunctionPtrTy functionPtr, InputArg0&& input0, InputArgs&&... input) {
 		using namespace CDecl;
 
 		static_assert(sizeof(FunctionPtrTy) == platform::register_size);
@@ -341,7 +342,8 @@ struct TasksCallStack<ReturnTy (__cdecl ObjectTy::*)(FunctionArgs...), InputArg0
 
 		using TaskCaller = typename TaskCallerDomain::TaskCaller;
 
-		auto* taskCallerDomain = static_cast<TaskCallerDomain*>(fiber);
+		auto* fiber = static_cast<Fiber*>(handle);
+		auto* taskCallerDomain = static_cast<TaskCallerDomain*>(handle);
 		GSL_ASSUME(taskCallerDomain);
 		ASSERT((reinterpret_cast<uintptr_t>(taskCallerDomain) & 0x0F) == 0); // stack must be aligned on a 16-byte boundary
 
@@ -505,40 +507,40 @@ struct TaskTraits<Callable, STDEX type_list<Args...>> {
 
 	static constexpr Focus::Concurrency::Task<ReturnTy> CreateTask(
 		Callable&& callable, Args&&... args, const StackSize stackSize = Default::StackSize, const Priority priority = Default::Priority) {
-		auto* const fiber = Scheduler::GetEmptyFiber(stackSize);
-		ASSERT(fiber);
+		FiberHandle const handle = Scheduler::GetEmptyFiber(stackSize);
+		ASSERT(handle);
 
 		if constexpr (STDEX is_specialization_v<STD remove_cvref_t<Callable>, STD reference_wrapper>) {
 			using RawCallable = STD remove_cvref_t<typename STD remove_cvref_t<Callable>::type>;
 
 			if constexpr (STD is_member_function_pointer_v<RawCallable>) {
-				TasksCallStack<RawCallable, Args...>::Create(fiber, callable.get(), STD forward<Args>(args)...);
+				TasksCallStack<RawCallable, Args...>::Create(handle, callable.get(), STD forward<Args>(args)...);
 			} else if constexpr (STD is_function_v<STD remove_pointer_t<RawCallable>>) {
-				TasksCallStack<STD remove_pointer_t<RawCallable>, Args...>::Create(fiber, callable.get(), STD forward<Args>(args)...);
+				TasksCallStack<STD remove_pointer_t<RawCallable>, Args...>::Create(handle, callable.get(), STD forward<Args>(args)...);
 			}
 		} else {
 			using RawCallable = STD remove_cvref_t<Callable>;
 
 			if constexpr (STD is_member_function_pointer_v<RawCallable>) {
-				TasksCallStack<RawCallable, Args...>::Create(fiber, callable, STD forward<Args>(args)...);
+				TasksCallStack<RawCallable, Args...>::Create(handle, callable, STD forward<Args>(args)...);
 			} else if constexpr (STD is_function_v<STD remove_pointer_t<RawCallable>>) {
-				TasksCallStack<STD remove_pointer_t<RawCallable>, Args...>::Create(fiber, callable, STD forward<Args>(args)...);
+				TasksCallStack<STD remove_pointer_t<RawCallable>, Args...>::Create(handle, callable, STD forward<Args>(args)...);
 			} else if constexpr (STDEX is_trivial_functor_v<RawCallable>) {
 				auto callOperatorPtr = &RawCallable::operator();
 
-				TasksCallStack<decltype(callOperatorPtr), Callable, Args...>::Create(fiber, callOperatorPtr, STD forward<Callable>(callable), STD forward<Args>(args)...);
+				TasksCallStack<decltype(callOperatorPtr), Callable, Args...>::Create(handle, callOperatorPtr, STD forward<Callable>(callable), STD forward<Args>(args)...);
 			} else if constexpr (STDEX is_const_template_functor_v<ReturnTy, RawCallable, Args...>) {
 				STDEX const_template_operator_t<ReturnTy, RawCallable, Args...> callOperatorPtr = &RawCallable::operator();
 
-				TasksCallStack<decltype(callOperatorPtr), Callable, Args...>::Create(fiber, callOperatorPtr, STD forward<Callable>(callable), STD forward<Args>(args)...);
+				TasksCallStack<decltype(callOperatorPtr), Callable, Args...>::Create(handle, callOperatorPtr, STD forward<Callable>(callable), STD forward<Args>(args)...);
 			} else {
 				STDEX template_operator_t<ReturnTy, RawCallable, Args...> callOperatorPtr = &RawCallable::operator();
 
-				TasksCallStack<decltype(callOperatorPtr), Callable, Args...>::Create(fiber, callOperatorPtr, STD forward<Callable>(callable), STD forward<Args>(args)...);
+				TasksCallStack<decltype(callOperatorPtr), Callable, Args...>::Create(handle, callOperatorPtr, STD forward<Callable>(callable), STD forward<Args>(args)...);
 			}
 		}
 
-		Scheduler::ScheduleFiber(fiber, priority);
+		Scheduler::ScheduleFiber(handle, priority);
 		return {};
 	}
 

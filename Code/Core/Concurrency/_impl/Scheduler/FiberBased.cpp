@@ -241,8 +241,8 @@ __forceinline void FiberBased::ExecuteScheduler() noexcept {
 
 			if (target == redBlackBit) {
 				if (tail.compare_exchange_strong(currentTail, nextTail)) {
-					const auto fiber = static_cast<FiberPtr>(reinterpret_cast<FiberHandle>(currentValue & 0xFFFFFFFFFFFFFF00));
-					ExecuteFiber(fiber);
+					const auto handle = reinterpret_cast<FiberHandle>(currentValue & 0xFFFFFFFFFFFFFF00);
+					ExecuteFiber(handle);
 					break;
 				}
 				goto RETRY;
@@ -262,9 +262,10 @@ __forceinline void FiberBased::ExecuteScheduler() noexcept {
 	}
 }
 
-void FiberBased::ExecuteFiber(FiberPtr fiber) noexcept {
+void FiberBased::ExecuteFiber(FiberHandle handle) noexcept {
+	const auto fiber = static_cast<Fiber*>(handle);
 	SwitchToFocusFiber(fiber);
-	ReleaseFiber(fiber);
+	ReleaseFiber(handle);
 }
 
 }

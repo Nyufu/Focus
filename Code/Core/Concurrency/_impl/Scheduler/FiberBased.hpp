@@ -45,16 +45,13 @@ private:
 	};
 
 public:
-	using FiberPtr = Fiber*;
-
-public:
 	ONLY_CONSTRUCT(FiberBased);
 	FiberBased();
 	~FiberBased();
 
-	FiberPtr GetEmptyFiber(StackSize stackSize) noexcept;
-	void ReleaseFiber(FiberPtr fiber) noexcept;
-	void ScheduleFiber(FiberPtr fiber, Priority priority);
+	FiberHandle GetEmptyFiber(StackSize stackSize) noexcept;
+	void ReleaseFiber(FiberHandle handle) noexcept;
+	void ScheduleFiber(FiberHandle handle, Priority priority);
 
 private:
 	FiberBased(size_t largeSizeInBytes, size_t mediumSizeInBytes, size_t smallSizeInBytes);
@@ -66,7 +63,7 @@ private:
 	void Signal() noexcept;
 
 	void ExecuteScheduler() noexcept;
-	void ExecuteFiber(FiberPtr fiber) noexcept;
+	void ExecuteFiber(FiberHandle handle) noexcept;
 
 private:
 	//[[no_unique_address]]
@@ -102,8 +99,8 @@ private:
 
 WARNING_SCOPE_END
 
-inline FiberBased::FiberPtr FiberBased::GetEmptyFiber(StackSize stackSize) noexcept {
-	//_mm_prefetch(reinterpret_cast<const char*>(STD addressof(freeDescs)), _MM_HINT_NTA);
+inline FiberHandle FiberBased::GetEmptyFiber(StackSize stackSize) noexcept {
+	_mm_prefetch(reinterpret_cast<const char*>(STD addressof(stackPoolPtr)), _MM_HINT_NTA);
 
 	const auto zero = _mm256_setzero_si256();
 	const auto random = _readgsbase_u64();
@@ -112,10 +109,13 @@ inline FiberBased::FiberPtr FiberBased::GetEmptyFiber(StackSize stackSize) noexc
 	const auto size = freePoolSizesInBytes[index];
 	ASSERT((size & 0x000000000000003f) == 0ull);
 	const auto storage = reinterpret_cast<uintptr_t>(freePools[index]);
+	ASSERT(storage);
 
-	ptrdiff_t offset = random % size;
-	const auto startPoint = STD assume_aligned<platform::cacheline_size>(reinterpret_cast<__m256i*>(storage + offset));
-	ASSERT(startPoint);
+	const auto beginPoint = STD assume_aligned<platform::cacheline_size>(reinterpret_cast<__m256i*>(storage));
+	const auto returnPoint = STD assume_aligned<platform::cacheline_size>(reinterpret_cast<__m256i*>(storage + size));
+	const size_t startOffset = random % size;
+	const auto startPoint = STD assume_aligned<platform::cacheline_size>(reinterpret_cast<__m256i*>(storage + startOffset));
+
 	for (auto it = startPoint;;) {
 		const uint32_t mask = _mm256_movemask_epi8(_mm256_cmpeq_epi32(*it, zero));
 		if (mask != 0xFFFFFFFF) {
@@ -125,29 +125,33 @@ inline FiberBased::FiberPtr FiberBased::GetEmptyFiber(StackSize stackSize) noexc
 			if (fiberOffset == 0u)
 				continue;
 
-			return static_cast<FiberPtr>(reinterpret_cast<FiberHandle>(reinterpret_cast<uintptr_t>(stackPoolPtr) + fiberOffset));
+			auto handle = STD assume_aligned<256>(reinterpret_cast<FiberHandle>(reinterpret_cast<uintptr_t>(stackPoolPtr) + fiberOffset));
+
+			_mm_prefetch(reinterpret_cast<const char*>(STD addressof(queueDesc)), _MM_HINT_NTA); // The ScheduleFiber will be use it soon.
+
+			return handle;
 		}
 
-		const auto incremented = offset + sizeof(__m256i);
-		offset = incremented >= size ? incremented - size : incremented;
-		it = STD assume_aligned<sizeof(__m256i)>(reinterpret_cast<__m256i*>(storage + offset));
+		const auto incremented = it + 1;
+		it = incremented == returnPoint ? beginPoint : incremented;
 		if (startPoint == it) {
-			return nullptr; // There is no free fiber, need to finish one from the queue.
+			// There is no free fiber.
+			// TODO: switch to another task and finish it, instead of return nullptr.
+			return nullptr;
 		}
 	}
 }
 
-inline void FiberBased::ReleaseFiber(FiberPtr fiber) noexcept {
+inline void FiberBased::ReleaseFiber(FiberHandle handle) noexcept {
+	auto ptr = STD assume_aligned<256>(handle);
+	auto fiber = static_cast<Fiber*>(ptr);
 	ASSERT(fiber);
 	ASSERT(fiber->freeSetPlace);
 	ASSERT(!*fiber->freeSetPlace);
-	auto handle = STD assume_aligned<256>(static_cast<FiberHandle>(fiber));
-	*fiber->freeSetPlace = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(handle) - reinterpret_cast<uintptr_t>(stackPoolPtr));
+	*fiber->freeSetPlace = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(ptr) - reinterpret_cast<uintptr_t>(stackPoolPtr));
 }
 
-inline void FiberBased::ScheduleFiber(FiberPtr fiber, Priority priority) {
-	_mm_prefetch(reinterpret_cast<const char*>(STD addressof(queueDesc)), _MM_HINT_NTA);
-
+inline void FiberBased::ScheduleFiber(FiberHandle handle, Priority priority) {
 	auto& head = GetValue(heads, priority);
 	const auto targetIndex = head.fetch_add(1, STD memory_order::relaxed);
 	const auto queue = GetValue(queues, priority);
@@ -155,7 +159,6 @@ inline void FiberBased::ScheduleFiber(FiberPtr fiber, Priority priority) {
 	const auto redBlackMask = queueDesc.GetRedBlackMask();
 	const uint8_t redBlackBit = targetIndex & redBlackMask ? 1 : 0;
 
-	auto handle = static_cast<FiberHandle>(fiber);
 	auto ptr = STD assume_aligned<256>(handle);
 	queue[targetIndex & mask] = reinterpret_cast<FiberHandle>(reinterpret_cast<uintptr_t>(ptr) | redBlackBit);
 
