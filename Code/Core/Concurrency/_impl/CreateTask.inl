@@ -14,6 +14,7 @@
 
 [[noreturn]] __declspec(noinline) static void Switch() noexcept {
 	__debugbreak();
+	STD terminate();
 }
 
 namespace Focus::Concurrency {
