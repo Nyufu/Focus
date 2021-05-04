@@ -272,7 +272,9 @@ struct TasksCallStack<ReturnTy __cdecl(FunctionArgs...), InputArgs...> {
 
 		SetOnStack<-3>(taskCallerDomain, &FiberInitializer);
 		SetOnStack<-2>(taskCallerDomain, functionPtr);
-		SetOnStack<-1>(taskCallerDomain, &TaskCallerDomain::Finish);
+		SetOnStack<-1>(taskCallerDomain, &TaskCallerDomain::Finish); // This will be stored in RBX and replaced with FiberRunner
+
+		const register_t stackPointer = reinterpret_cast<register_t>(taskCallerDomain) - (platform::register_size * 3);
 
 		auto* taskCaller = static_cast<TaskCaller*>(taskCallerDomain);
 		GSL_ASSUME(taskCaller);
@@ -290,7 +292,7 @@ struct TasksCallStack<ReturnTy __cdecl(FunctionArgs...), InputArgs...> {
 		GSL_ASSUME(taskCommon);
 		::new (taskCommon) TaskCommon{ .refCount = 1 };
 
-		fiber->stackPointer = reinterpret_cast<register_t>(taskCallerDomain) - (platform::register_size * 3);
+		fiber->stackPointer = stackPointer;
 	}
 };
 
@@ -319,11 +321,11 @@ struct TasksCallStack<ReturnTy (__cdecl ObjectTy::*)(FunctionArgs...), InputArg0
 		GSL_ASSUME(taskCallerDomain);
 		ASSERT((reinterpret_cast<uintptr_t>(taskCallerDomain) & 0x0F) == 0); // stack must be aligned on a 16-byte boundary
 
-		auto lastInstructionPtrAddress = taskCallerDomain->GetLastInstructionPointer();
-
 		SetOnStack<-3>(taskCallerDomain, &FiberInitializer);
 		SetOnStack<-2>(taskCallerDomain, functionPtr);
-		SetOnStack<-1>(taskCallerDomain, &TaskCallerDomain::Finish);
+		SetOnStack<-1>(taskCallerDomain, &TaskCallerDomain::Finish); // This will be stored in RBX and replaced with FiberRunner
+
+		const register_t stackPointer = reinterpret_cast<register_t>(taskCallerDomain) - (platform::register_size * 3);
 
 		auto* taskCaller = static_cast<TaskCaller*>(taskCallerDomain);
 		GSL_ASSUME(taskCaller);
@@ -343,7 +345,7 @@ struct TasksCallStack<ReturnTy (__cdecl ObjectTy::*)(FunctionArgs...), InputArg0
 		GSL_ASSUME(taskCommon);
 		::new (taskCommon) TaskCommon{ .refCount = 1 };
 
-		fiber->stackPointer = reinterpret_cast<register_t>(taskCallerDomain) - (platform::register_size * 3);
+		fiber->stackPointer = stackPointer;
 	}
 };
 
