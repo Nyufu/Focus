@@ -12,6 +12,10 @@
 #include <utility.hxx>
 
 
+[[noreturn]] __declspec(noinline) static void Switch() noexcept {
+	__debugbreak();
+}
+
 namespace Focus::Concurrency {
 namespace _impl {
 
@@ -205,23 +209,10 @@ INLINE constexpr size_t PaddingSize = (platform::cacheline_size - (Task<ReturnTy
 template <class ReturnTy, class FTy, class ITy, class = void>
 struct TaskCallerDomain : TaskCaller<FTy, ITy>, STDEX padding<PaddingSize<ReturnTy, FTy, ITy>>, Task<ReturnTy> {
 	using TaskCaller = TaskCaller<FTy, ITy>;
-	void Finish() {
+	void Finish() noexcept {
 		static_cast<ArgumentsStorage<FTy, ITy>*>(this)->Cleanup();
-	}
 
-	constexpr register_t GetLastInstructionPointer() const noexcept {
-		auto stackBottom = reinterpret_cast<register_t>(static_cast<const STDEX padding<PaddingSize<ReturnTy, FTy, ITy>>*>(this));
-		GSL_ASSUME(stackBottom);
-
-		if constexpr (!STD is_empty_v<ArgumentsStorage<FTy, ITy>>) {
-			if constexpr (STDEX is_aligned_v<sizeof(ArgumentsStorage<FTy, ITy>), platform::default_align>) {
-				return stackBottom + platform::default_align;
-			} else {
-				return stackBottom - platform::register_size;
-			}
-		} else {
-			return stackBottom + platform::register_size;
-		}
+		Switch(); // Here should change to the new fiber
 	}
 };
 
@@ -229,24 +220,11 @@ template <class ReturnTy, class FTy, class ITy>
 struct TaskCallerDomain<ReturnTy, FTy, ITy, STD enable_if_t<abi::x64::is_return_by_register_v<ReturnTy> && !STD is_void_v<ReturnTy>>>
 	: TaskCaller<FTy, ITy>, STDEX padding<PaddingSize<ReturnTy, FTy, ITy>>, Task<ReturnTy> {
 	using TaskCaller = TaskCaller<FTy, ITy>;
-	void Finish(ReturnTy returnValue) {
+	void Finish(ReturnTy returnValue) noexcept {
 		STD memcpy(this->result, &returnValue, sizeof(ReturnTy));
 		static_cast<ArgumentsStorage<FTy, ITy>*>(this)->Cleanup();
-	}
 
-	constexpr register_t GetLastInstructionPointer() const noexcept {
-		auto stackBottom = reinterpret_cast<register_t>(static_cast<const STDEX padding<PaddingSize<ReturnTy, FTy, ITy>>*>(this));
-		GSL_ASSUME(stackBottom);
-
-		if constexpr (!STD is_empty_v<ArgumentsStorage<FTy, ITy>>) {
-			if constexpr (STDEX is_aligned_v<sizeof(ArgumentsStorage<FTy, ITy>), platform::default_align>) {
-				return stackBottom + platform::default_align;
-			} else {
-				return stackBottom - platform::register_size;
-			}
-		} else {
-			return stackBottom + platform::register_size;
-		}
+		Switch(); // Here should change to the new fiber
 	}
 };
 
@@ -291,34 +269,27 @@ struct TasksCallStack<ReturnTy __cdecl(FunctionArgs...), InputArgs...> {
 		GSL_ASSUME(taskCallerDomain);
 		ASSERT((reinterpret_cast<uintptr_t>(taskCallerDomain) & 0x0F) == 0); // stack must be aligned on a 16-byte boundary
 
-		auto lastInstructionPtrAddress = taskCallerDomain->GetLastInstructionPointer();
-
-		SetOnStack<-4>(taskCallerDomain, &TaskCallerDomain::Finish);
-		SetOnStack<-3>(taskCallerDomain, functionPtr);
-		SetOnStack<-2>(taskCallerDomain, lastInstructionPtrAddress);
-		SetOnStack<-1>(taskCallerDomain, &FiberInitializer);
-
-		fiber->stackPointer = reinterpret_cast<register_t>(taskCallerDomain) - platform::register_size;
+		SetOnStack<-3>(taskCallerDomain, &FiberInitializer);
+		SetOnStack<-2>(taskCallerDomain, functionPtr);
+		SetOnStack<-1>(taskCallerDomain, &TaskCallerDomain::Finish);
 
 		auto* taskCaller = static_cast<TaskCaller*>(taskCallerDomain);
 		GSL_ASSUME(taskCaller);
 
-		auto* task = static_cast<Task<ReturnTy>*>(taskCallerDomain);
-		GSL_ASSUME(task);
-
 		if constexpr (abi::x64::is_return_by_register_v<ReturnTy>) {
 			TaskCallerInitializer<STDEX type_list<FunctionArgs...>, STDEX type_list<InputArgs...>>::Initialize(taskCaller, STD forward<InputArgs>(input)...);
 		} else {
-			auto& result = *reinterpret_cast<ReturnTy*>(task->result);
+			auto& task = *static_cast<Task<ReturnTy>*>(taskCallerDomain);
+			auto& result = *reinterpret_cast<ReturnTy*>(task.result);
 
 			TaskCallerInitializer<STDEX type_list<ReturnRef, FunctionArgs...>, STDEX type_list<ReturnRef, InputArgs...>>::Initialize(taskCaller, result, STD forward<InputArgs>(input)...);
 		}
 
-		::new (reinterpret_cast<void*>(lastInstructionPtrAddress)) register_t{ 0 };
-
 		auto* taskCommon = static_cast<TaskCommon*>(taskCallerDomain);
 		GSL_ASSUME(taskCommon);
-		::new (taskCommon) TaskCommon{ 1 };
+		::new (taskCommon) TaskCommon{ .refCount = 1 };
+
+		fiber->stackPointer = reinterpret_cast<register_t>(taskCallerDomain) - (platform::register_size * 3);
 	}
 };
 
@@ -349,34 +320,29 @@ struct TasksCallStack<ReturnTy (__cdecl ObjectTy::*)(FunctionArgs...), InputArg0
 
 		auto lastInstructionPtrAddress = taskCallerDomain->GetLastInstructionPointer();
 
-		SetOnStack<-4>(taskCallerDomain, &TaskCallerDomain::Finish);
-		SetOnStack<-3>(taskCallerDomain, functionPtr);
-		SetOnStack<-2>(taskCallerDomain, lastInstructionPtrAddress);
-		SetOnStack<-1>(taskCallerDomain, &FiberInitializer);
-
-		fiber->stackPointer = reinterpret_cast<register_t>(taskCallerDomain) - platform::register_size;
+		SetOnStack<-3>(taskCallerDomain, &FiberInitializer);
+		SetOnStack<-2>(taskCallerDomain, functionPtr);
+		SetOnStack<-1>(taskCallerDomain, &TaskCallerDomain::Finish);
 
 		auto* taskCaller = static_cast<TaskCaller*>(taskCallerDomain);
 		GSL_ASSUME(taskCaller);
-
-		auto* task = static_cast<Task<ReturnTy>*>(taskCallerDomain);
-		GSL_ASSUME(task);
 
 		if constexpr (abi::x64::is_return_by_register_v<ReturnTy>) {
 			TaskCallerInitializer<STDEX type_list<InputArg0, FunctionArgs...>, STDEX type_list<InputArg0, InputArgs...>>::Initialize(
 				taskCaller, STD forward<InputArg0>(input0), STD forward<InputArgs>(input)...);
 		} else {
-			auto& result = *reinterpret_cast<ReturnTy*>(task->result);
+			auto& task = *static_cast<Task<ReturnTy>*>(taskCallerDomain);
+			auto& result = *reinterpret_cast<ReturnTy*>(task.result);
 
 			TaskCallerInitializer<STDEX type_list<InputArg0, ReturnRef, FunctionArgs...>, STDEX type_list<InputArg0, ReturnRef, InputArgs...>>::Initialize(
 				taskCaller, STD forward<InputArg0>(input0), result, STD forward<InputArgs>(input)...);
 		}
 
-		::new (reinterpret_cast<void*>(lastInstructionPtrAddress)) register_t{ 0 };
-
 		auto* taskCommon = static_cast<TaskCommon*>(taskCallerDomain);
 		GSL_ASSUME(taskCommon);
-		::new (taskCommon) TaskCommon{ 1 };
+		::new (taskCommon) TaskCommon{ .refCount = 1 };
+
+		fiber->stackPointer = reinterpret_cast<register_t>(taskCallerDomain) - (platform::register_size * 3);
 	}
 };
 

@@ -2,18 +2,19 @@ public FiberInitializer
 public SwitchToFocusFiber
 
 Fiber STRUCT
+	stackCloser			qword ?
 	stackLimit			qword ?
 	stackSize			qword ?
 	freeSetPlace		qword ?
 	stackPointer		qword ?
 Fiber ENDS
 
-FiberInitData STRUCT
-	finish				qword ?
-	taskFunction		qword ?
-	basePointer			qword ?
-	nextInstruction		qword ?
-FiberInitData ENDS
+TaskCommonPartSize		equ 8h
+
+TaskCommon STRUCT
+	refCount			qword ?
+    fiber_				Fiber <>
+TaskCommon ENDS
 
 .code
 
@@ -31,45 +32,42 @@ FiberRunner endp
 
 ALIGN 16
 FiberInitializer proc frame
-	;lea rbx, [rip - 017h] ; 10 = the offsett of FiberRunner; 7 = size of lea rbx, []
-	DB 48h, 8Dh, 1Dh, 0E9h, 0FFh, 0FFh, 0FFh
-	mov			qword ptr[rsp], rbx					; set the FiberRunner as the first function in the callstack
-
-	mov			rbp, qword ptr[rsp-8]				; now the rbp points to the bottom of the stack
 	.endprolog
+	;lea         rdx, offset FiberRunner
+	;lea rdx, [rip - 017h] ; 10 = the offsett of FiberRunner; 7 = size of lea rdx, []
+	DB 48h, 8Dh, 15h, 0E9h, 0FFh, 0FFh, 0FFh		; This works even debug mode
 
-	mov			rbx, qword ptr[rsp-18h]				; the FiberRunner will use the address of Finish function from rbx
-	mov			rax, qword ptr[rsp-10h]				; load the taskFunction
+	mov			rbp, (Fiber ptr[rcx]).stackCloser
 
-	mov			rcx, qword ptr[rsp+8]
-	movsd		xmm0, mmword ptr[rsp+8]
-	mov			rdx, qword ptr[rsp+10h]
-	movsd		xmm1, mmword ptr[rsp+10h]
-	mov			r8, qword ptr[rsp+18h]
-	movsd		xmm2, mmword ptr[rsp+18h]
-	mov			r9, qword ptr[rsp+20h]
-	movsd		xmm3, mmword ptr[rsp+20h]
+	mov			rbx, qword ptr[rsp+8]				; the FiberRunner will use the address of Finish function from rbx
+	mov			qword ptr[rsp+8], rdx				; set the FiberRunner as the first function in the callstack
 
-	jmp			rax									; the taskFunction
+	mov			rcx, qword ptr[rsp+10h]
+	movsd		xmm0, mmword ptr[rsp+10h]
+	mov			rdx, qword ptr[rsp+18h]
+	movsd		xmm1, mmword ptr[rsp+18h]
+	mov			r8, qword ptr[rsp+20h]
+	movsd		xmm2, mmword ptr[rsp+20h]
+	mov			r9, qword ptr[rsp+28h]
+	movsd		xmm3, mmword ptr[rsp+28h]
+
+	ret
 FiberInitializer endp
 
 
 ALIGN 16
 SwitchToFocusFiber proc frame
-	mov			rsp, (Fiber ptr[rcx]).stackPointer
 	.endprolog
-
 	mov			rax, qword ptr gs:[30h]				; save the current TEB's address to rax
 
 	mov			rdx, (Fiber ptr[rcx]).stackLimit
-
-	mov			r8, qword ptr[rsp]					; loads the nextInstruction
+	mov			rsp, (Fiber ptr[rcx]).stackPointer
 
 	mov			qword ptr [rax+8], rcx				; store the new StackBase
 	mov			qword ptr [rax+10h], rdx			; store the new StackLimit
 	mov			qword ptr [rax+20h], rcx			; store the new fiber's address into the TIB.FiberData
 
-	jmp			r8									; jumps to the nextInstruction which the FiberInitializer or the interrupted task
+	ret
 SwitchToFocusFiber endp
 
 end

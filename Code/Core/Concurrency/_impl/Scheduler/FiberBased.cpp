@@ -184,7 +184,7 @@ __forceinline void FiberBased::Init(size_t freeSetSizeInBytes, size_t queueSizeI
 			const auto stackLimit = currentAddress + sizeOfGuardPage;
 			const auto preparedFiberStackAddress = currentAddress + stackSize - sizeof(FiberImpl);
 
-			::new (reinterpret_cast<void*>(preparedFiberStackAddress)) FiberImpl{stackLimit, stackType, freeSetIter};
+			::new (reinterpret_cast<void*>(preparedFiberStackAddress)) FiberImpl{ .stackLimit = stackLimit, .stackSize = stackType, .freeSetPlace = freeSetIter };
 			ptrdiff_t offset = preparedFiberStackAddress + sizeof(FiberImpl) - reinterpret_cast<uintptr_t>(stackPoolPtr);
 			ASSERT((offset & 0xFFFFFFFF00000000) == 0ll);
 			*freeSetIter = static_cast<uint32_t>(offset);
