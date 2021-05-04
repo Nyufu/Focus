@@ -13,7 +13,7 @@ TaskCommonPartSize		equ 8h
 
 TaskCommon STRUCT
 	refCount			qword ?
-    fiber_				Fiber <>
+	fiber_				Fiber <>
 TaskCommon ENDS
 
 .code

@@ -353,47 +353,47 @@ struct TasksCallStack<ReturnTy (__cdecl ObjectTy::*)(FunctionArgs...), InputArg0
 
 template <class ReturnTy, class ObjectTy, class... FunctionArgs, class InputArg0, class... InputArgs>
 struct TasksCallStack<ReturnTy (__cdecl ObjectTy::*)(FunctionArgs...) noexcept, InputArg0, InputArgs...>
-    : TasksCallStack<ReturnTy (__cdecl ObjectTy::*)(FunctionArgs...), InputArg0, InputArgs...> {};
+	: TasksCallStack<ReturnTy (__cdecl ObjectTy::*)(FunctionArgs...), InputArg0, InputArgs...> {};
 
 template <class ReturnTy, class ObjectTy, class... FunctionArgs, class InputArg0, class... InputArgs>
 struct TasksCallStack<ReturnTy (__cdecl ObjectTy::*)(FunctionArgs...) const, InputArg0, InputArgs...>
-    : TasksCallStack<ReturnTy (__cdecl ObjectTy::*)(FunctionArgs...), InputArg0, InputArgs...> {};
+	: TasksCallStack<ReturnTy (__cdecl ObjectTy::*)(FunctionArgs...), InputArg0, InputArgs...> {};
 
 template <class ReturnTy, class ObjectTy, class... FunctionArgs, class InputArg0, class... InputArgs>
 struct TasksCallStack<ReturnTy (__cdecl ObjectTy::*)(FunctionArgs...) const noexcept, InputArg0, InputArgs...>
-    : TasksCallStack<ReturnTy (__cdecl ObjectTy::*)(FunctionArgs...), InputArg0, InputArgs...> {};
+	: TasksCallStack<ReturnTy (__cdecl ObjectTy::*)(FunctionArgs...), InputArg0, InputArgs...> {};
 
 template <class ReturnTy, class ObjectTy, class... FunctionArgs, class InputArg0, class... InputArgs>
 struct TasksCallStack<ReturnTy (__cdecl ObjectTy::*)(FunctionArgs...)&, InputArg0, InputArgs...>
-    : TasksCallStack<ReturnTy (__cdecl ObjectTy::*)(FunctionArgs...), InputArg0, InputArgs...> {};
+	: TasksCallStack<ReturnTy (__cdecl ObjectTy::*)(FunctionArgs...), InputArg0, InputArgs...> {};
 
 template <class ReturnTy, class ObjectTy, class... FunctionArgs, class InputArg0, class... InputArgs>
 struct TasksCallStack<ReturnTy (__cdecl ObjectTy::*)(FunctionArgs...)& noexcept, InputArg0, InputArgs...>
-    : TasksCallStack<ReturnTy (__cdecl ObjectTy::*)(FunctionArgs...), InputArg0, InputArgs...> {};
+	: TasksCallStack<ReturnTy (__cdecl ObjectTy::*)(FunctionArgs...), InputArg0, InputArgs...> {};
 
 template <class ReturnTy, class ObjectTy, class... FunctionArgs, class InputArg0, class... InputArgs>
 struct TasksCallStack<ReturnTy (__cdecl ObjectTy::*)(FunctionArgs...) const&, InputArg0, InputArgs...>
-    : TasksCallStack<ReturnTy (__cdecl ObjectTy::*)(FunctionArgs...), InputArg0, InputArgs...> {};
+	: TasksCallStack<ReturnTy (__cdecl ObjectTy::*)(FunctionArgs...), InputArg0, InputArgs...> {};
 
 template <class ReturnTy, class ObjectTy, class... FunctionArgs, class InputArg0, class... InputArgs>
 struct TasksCallStack<ReturnTy (__cdecl ObjectTy::*)(FunctionArgs...) const& noexcept, InputArg0, InputArgs...>
-    : TasksCallStack<ReturnTy (__cdecl ObjectTy::*)(FunctionArgs...), InputArg0, InputArgs...> {};
+	: TasksCallStack<ReturnTy (__cdecl ObjectTy::*)(FunctionArgs...), InputArg0, InputArgs...> {};
 
 template <class ReturnTy, class ObjectTy, class... FunctionArgs, class InputArg0, class... InputArgs>
 struct TasksCallStack<ReturnTy (__cdecl ObjectTy::*)(FunctionArgs...)&&, InputArg0, InputArgs...>
-    : TasksCallStack<ReturnTy (__cdecl ObjectTy::*)(FunctionArgs...), InputArg0, InputArgs...> {};
+	: TasksCallStack<ReturnTy (__cdecl ObjectTy::*)(FunctionArgs...), InputArg0, InputArgs...> {};
 
 template <class ReturnTy, class ObjectTy, class... FunctionArgs, class InputArg0, class... InputArgs>
 struct TasksCallStack<ReturnTy (__cdecl ObjectTy::*)(FunctionArgs...)&& noexcept, InputArg0, InputArgs...>
-    : TasksCallStack<ReturnTy (__cdecl ObjectTy::*)(FunctionArgs...), InputArg0, InputArgs...> {};
+	: TasksCallStack<ReturnTy (__cdecl ObjectTy::*)(FunctionArgs...), InputArg0, InputArgs...> {};
 
 template <class ReturnTy, class ObjectTy, class... FunctionArgs, class InputArg0, class... InputArgs>
 struct TasksCallStack<ReturnTy (__cdecl ObjectTy::*)(FunctionArgs...) const&&, InputArg0, InputArgs...>
-    : TasksCallStack<ReturnTy (__cdecl ObjectTy::*)(FunctionArgs...), InputArg0, InputArgs...> {};
+	: TasksCallStack<ReturnTy (__cdecl ObjectTy::*)(FunctionArgs...), InputArg0, InputArgs...> {};
 
 template <class ReturnTy, class ObjectTy, class... FunctionArgs, class InputArg0, class... InputArgs>
 struct TasksCallStack<ReturnTy (__cdecl ObjectTy::*)(FunctionArgs...) const&& noexcept, InputArg0, InputArgs...>
-    : TasksCallStack<ReturnTy (__cdecl ObjectTy::*)(FunctionArgs...), InputArg0, InputArgs...> {};
+	: TasksCallStack<ReturnTy (__cdecl ObjectTy::*)(FunctionArgs...), InputArg0, InputArgs...> {};
 
 template <class ReturnTy, class... FunctionArgs, class... InputArgs>
 struct TasksCallStack<ReturnTy __vectorcall(FunctionArgs...), InputArgs...> {
@@ -407,7 +407,7 @@ struct TasksCallStack<ReturnTy __vectorcall(FunctionArgs...), InputArgs...> {
 
 template <class ReturnTy, class... FunctionArgs, class... InputArgs>
 struct TasksCallStack<ReturnTy __vectorcall(FunctionArgs...) noexcept, InputArgs...>
-    : TasksCallStack<ReturnTy __vectorcall(FunctionArgs...), InputArgs...> {};
+	: TasksCallStack<ReturnTy __vectorcall(FunctionArgs...), InputArgs...> {};
 
 template <class ReturnTy, class ObjectTy, class... FunctionArgs, class InputArg0, class... InputArgs>
 struct TasksCallStack<ReturnTy (__vectorcall ObjectTy::*)(FunctionArgs...), InputArg0, InputArgs...> {
@@ -419,47 +419,47 @@ struct TasksCallStack<ReturnTy (__vectorcall ObjectTy::*)(FunctionArgs...), Inpu
 
 template <class ReturnTy, class ObjectTy, class... FunctionArgs, class InputArg0, class... InputArgs>
 struct TasksCallStack<ReturnTy (__vectorcall ObjectTy::*)(FunctionArgs...) noexcept, InputArg0, InputArgs...>
-    : TasksCallStack<ReturnTy (__vectorcall ObjectTy::*)(FunctionArgs...), InputArg0, InputArgs...> {};
+	: TasksCallStack<ReturnTy (__vectorcall ObjectTy::*)(FunctionArgs...), InputArg0, InputArgs...> {};
 
 template <class ReturnTy, class ObjectTy, class... FunctionArgs, class InputArg0, class... InputArgs>
 struct TasksCallStack<ReturnTy (__vectorcall ObjectTy::*)(FunctionArgs...) const, InputArg0, InputArgs...>
-    : TasksCallStack<ReturnTy (__vectorcall ObjectTy::*)(FunctionArgs...), InputArg0, InputArgs...> {};
+	: TasksCallStack<ReturnTy (__vectorcall ObjectTy::*)(FunctionArgs...), InputArg0, InputArgs...> {};
 
 template <class ReturnTy, class ObjectTy, class... FunctionArgs, class InputArg0, class... InputArgs>
 struct TasksCallStack<ReturnTy (__vectorcall ObjectTy::*)(FunctionArgs...) const noexcept, InputArg0, InputArgs...>
-    : TasksCallStack<ReturnTy (__vectorcall ObjectTy::*)(FunctionArgs...), InputArg0, InputArgs...> {};
+	: TasksCallStack<ReturnTy (__vectorcall ObjectTy::*)(FunctionArgs...), InputArg0, InputArgs...> {};
 
 template <class ReturnTy, class ObjectTy, class... FunctionArgs, class InputArg0, class... InputArgs>
 struct TasksCallStack<ReturnTy (__vectorcall ObjectTy::*)(FunctionArgs...)&, InputArg0, InputArgs...>
-    : TasksCallStack<ReturnTy (__vectorcall ObjectTy::*)(FunctionArgs...), InputArg0, InputArgs...> {};
+	: TasksCallStack<ReturnTy (__vectorcall ObjectTy::*)(FunctionArgs...), InputArg0, InputArgs...> {};
 
 template <class ReturnTy, class ObjectTy, class... FunctionArgs, class InputArg0, class... InputArgs>
 struct TasksCallStack<ReturnTy (__vectorcall ObjectTy::*)(FunctionArgs...)& noexcept, InputArg0, InputArgs...>
-    : TasksCallStack<ReturnTy (__vectorcall ObjectTy::*)(FunctionArgs...), InputArg0, InputArgs...> {};
+	: TasksCallStack<ReturnTy (__vectorcall ObjectTy::*)(FunctionArgs...), InputArg0, InputArgs...> {};
 
 template <class ReturnTy, class ObjectTy, class... FunctionArgs, class InputArg0, class... InputArgs>
 struct TasksCallStack<ReturnTy (__vectorcall ObjectTy::*)(FunctionArgs...) const&, InputArg0, InputArgs...>
-    : TasksCallStack<ReturnTy (__vectorcall ObjectTy::*)(FunctionArgs...), InputArg0, InputArgs...> {};
+	: TasksCallStack<ReturnTy (__vectorcall ObjectTy::*)(FunctionArgs...), InputArg0, InputArgs...> {};
 
 template <class ReturnTy, class ObjectTy, class... FunctionArgs, class InputArg0, class... InputArgs>
 struct TasksCallStack<ReturnTy (__vectorcall ObjectTy::*)(FunctionArgs...) const& noexcept, InputArg0, InputArgs...>
-    : TasksCallStack<ReturnTy (__vectorcall ObjectTy::*)(FunctionArgs...), InputArg0, InputArgs...> {};
+	: TasksCallStack<ReturnTy (__vectorcall ObjectTy::*)(FunctionArgs...), InputArg0, InputArgs...> {};
 
 template <class ReturnTy, class ObjectTy, class... FunctionArgs, class InputArg0, class... InputArgs>
 struct TasksCallStack<ReturnTy (__vectorcall ObjectTy::*)(FunctionArgs...)&&, InputArg0, InputArgs...>
-    : TasksCallStack<ReturnTy (__vectorcall ObjectTy::*)(FunctionArgs...), InputArg0, InputArgs...> {};
+	: TasksCallStack<ReturnTy (__vectorcall ObjectTy::*)(FunctionArgs...), InputArg0, InputArgs...> {};
 
 template <class ReturnTy, class ObjectTy, class... FunctionArgs, class InputArg0, class... InputArgs>
 struct TasksCallStack<ReturnTy (__vectorcall ObjectTy::*)(FunctionArgs...)&& noexcept, InputArg0, InputArgs...>
-    : TasksCallStack<ReturnTy (__vectorcall ObjectTy::*)(FunctionArgs...), InputArg0, InputArgs...> {};
+	: TasksCallStack<ReturnTy (__vectorcall ObjectTy::*)(FunctionArgs...), InputArg0, InputArgs...> {};
 
 template <class ReturnTy, class ObjectTy, class... FunctionArgs, class InputArg0, class... InputArgs>
 struct TasksCallStack<ReturnTy (__vectorcall ObjectTy::*)(FunctionArgs...) const&&, InputArg0, InputArgs...>
-    : TasksCallStack<ReturnTy (__vectorcall ObjectTy::*)(FunctionArgs...), InputArg0, InputArgs...> {};
+	: TasksCallStack<ReturnTy (__vectorcall ObjectTy::*)(FunctionArgs...), InputArg0, InputArgs...> {};
 
 template <class ReturnTy, class ObjectTy, class... FunctionArgs, class InputArg0, class... InputArgs>
 struct TasksCallStack<ReturnTy (__vectorcall ObjectTy::*)(FunctionArgs...) const&& noexcept, InputArg0, InputArgs...>
-    : TasksCallStack<ReturnTy (__vectorcall ObjectTy::*)(FunctionArgs...), InputArg0, InputArgs...> {};
+	: TasksCallStack<ReturnTy (__vectorcall ObjectTy::*)(FunctionArgs...), InputArg0, InputArgs...> {};
 
 // clang-format on
 
