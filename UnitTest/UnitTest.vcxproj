@@ -23,7 +23,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
     <UseOfMfc>false</UseOfMfc>
   </PropertyGroup>
@@ -40,7 +40,7 @@
     <LinkIncremental>true</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup>
-    <IncludePath>$(IncludePath);$(ThirdPartyDir)WinAPI;$(ThirdPartyDir)TBB\include;$(VLDDir);$(ThirdPartyDir)GSL\include</IncludePath>
+    <IncludePath>$(IncludePath);$(ThirdPartyDir)WinAPI;$(ThirdPartyDir)TBB\include;$(VLDDir);$(ThirdPartyDir)GSL\include;$(ThirdPartyDir)fastrange</IncludePath>
     <LibraryPath>$(LibraryPath);$(VLDDir);$(ThirdPartyDir)TBB\lib\intel64\vc14</LibraryPath>
     <LocalDebuggerEnvironment>PATH=$(PATH);$(VLDDir);$(ThirdPartyDir)TBB\bin\intel64\vc14</LocalDebuggerEnvironment>
     <ExcludePath>$(ExcludePath);$(ThirdPartyDir)</ExcludePath>

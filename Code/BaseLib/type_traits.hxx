@@ -22,7 +22,7 @@ struct is_register_sized : STD bool_constant<is_register_sized_v<_Ty>> {};
 
 template <size_t _Align>
 struct _Alignment_error {
-#if !defined(__clang_major__) || (defined(__clang_major__) && __clang_major__ != 12) // Clang 12 template instantiation issue workaround
+#if !defined(__clang_major__) || (defined(__clang_major__) && __clang_major__ < 12) // Clang 12 template instantiation issue workaround
 	static_assert(always_false_v<_Align>, "alignment must be power of two");
 #endif
 };
