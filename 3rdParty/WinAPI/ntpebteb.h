@@ -366,4 +366,26 @@ typedef struct _TEB {
 	GUID EffectiveContainerId;                                        // +0x1828
 } TEB, *PTEB, *_PTEB;
 
+typedef struct _FIBER
+{
+    PVOID FiberData;                                                  // +0x000
+    struct _EXCEPTION_REGISTRATION_RECORD *ExceptionList;             // +0x008
+    PVOID StackBase;                                                  // +0x010
+    PVOID StackLimit;                                                 // +0x018
+    PVOID DeallocationStack;                                          // +0x020
+    CONTEXT FiberContext;                                             // +0x030
+#if (NTDDI_VERSION >= NTDDI_LONGHORN)
+    PVOID Wx86Tib;                                                    // +0x500
+    struct _ACTIVATION_CONTEXT_STACK *ActivationContextStackPointer;  // +0x508
+    PVOID FlsData;                                                    // +0x510
+    ULONG GuaranteedStackBytes;                                       // +0x518
+    ULONG TebFlags;                                                   // +0x51C
+    DWORD64 Cookie;                                                   // +0x520
+#else
+    ULONG GuaranteedStackBytes;
+    PVOID FlsData;
+    struct _ACTIVATION_CONTEXT_STACK *ActivationContextStackPointer;
+#endif
+} FIBER, *PFIBER;
+
 #endif
