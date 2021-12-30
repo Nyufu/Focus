@@ -11,38 +11,46 @@ constexpr bool PageGuardUsed = config::debug;
 
 struct ThreadArgs {
 	FiberBased* const scheduler;
-	HANDLE handle;
-	long index;
+	STD atomic_int index;
 };
 
 using ManagedThreadArgs = STDEX managed_object<ThreadArgs, Memory::Allocator::Heap<ThreadArgs>>;
 
 struct Thread {
+	Thread(FiberBased* scheduler, HANDLE handle, int index) noexcept;
 	Thread(void* arg) noexcept;
 
-	static void Spawn(ManagedThreadArgs& threadArgs) noexcept;
+	static int Spawn(ManagedThreadArgs& threadArgs) noexcept;
 
 	static DWORD Entry(void* arg) noexcept;
 
-	FiberBased* scheduler;
-	HANDLE handle;
+	FiberBased* const scheduler;
+	const HANDLE handle;
+	const int index;
 };
 
-Thread::Thread(void* arg) noexcept {
-	ASSERT(arg);
-	ManagedThreadArgs threadArgs{ static_cast<ManagedThreadArgs::object_pointer>(arg) };
-
-	Spawn(threadArgs);
-
-	scheduler = threadArgs->scheduler;
-	handle = threadArgs->handle;
+Thread::Thread(FiberBased* scheduler, HANDLE handle, int index) noexcept
+	: scheduler{ scheduler }
+	, handle{ handle }
+	, index{ index } {
 }
 
-void Thread::Spawn(ManagedThreadArgs& threadArgs) noexcept {
-	if (threadArgs->index == 0)
-		return;
+Thread::Thread(void* arg) noexcept
+	: Thread{ [=] {
+		ASSERT(arg);
+		ManagedThreadArgs threadArgs{ static_cast<ManagedThreadArgs::object_pointer>(arg) };
 
-	::_InterlockedDecrement(reinterpret_cast<volatile long*>(&threadArgs->index));
+		int index = Spawn(threadArgs);
+
+		return Thread{ threadArgs->scheduler, threadArgs->scheduler->threadHandles[index], index };
+	}() } {
+}
+
+int Thread::Spawn(ManagedThreadArgs& threadArgs) noexcept {
+	int index = --(threadArgs->index);
+
+	if (index < 0)
+		return 0;
 
 	DWORD threadId SUPPRESS_INITIALIZE(0);
 	auto threadHandle = ::CreateThread(nullptr, 1, Thread::Entry, threadArgs.get_ptr(), CREATE_SUSPENDED, &threadId);
@@ -53,14 +61,15 @@ void Thread::Spawn(ManagedThreadArgs& threadArgs) noexcept {
 	auto* const scheduler = threadArgs->scheduler;
 	ASSERT(scheduler);
 
-	scheduler->threadHandles[threadArgs->index] = threadHandle;
-	threadArgs->handle = threadHandle;
+	scheduler->threadHandles[index] = threadHandle;
 
 	::ResumeThread(threadHandle);
+
+	return index + 1;
 }
 
 DWORD Thread::Entry(void* arg) noexcept {
-	const Thread threadInfo{ arg };
+	Thread threadInfo{ arg };
 
 	threadInfo.scheduler->SwitchThreadToFiber();
 
@@ -143,7 +152,7 @@ __forceinline void FiberBased::Init(size_t freeSetSizeInBytes, size_t queueSizeI
 	};
 
 	{
-		ManagedThreadArgs threadArgs({ numberOfThreads + 1 }, this, nullptr, numberOfThreads);
+		ManagedThreadArgs threadArgs({ numberOfThreads + 1 }, this, numberOfThreads);
 		Thread::Spawn(threadArgs);
 	}
 
