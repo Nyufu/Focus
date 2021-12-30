@@ -60,13 +60,15 @@ private:
 
 	void Init(size_t freeSetSizeInBytes, size_t queueSizeInBytes, long numberOfThreads);
 
+	void SwitchThreadToFiber() noexcept;
+
 	void Signal() noexcept;
 
 	void ExecuteScheduler() noexcept;
 	void ExecuteFiber(FiberHandle handle) noexcept;
 
 private:
-	//[[no_unique_address]]
+	NO_UNIQUE_ADDRESS
 	Memory::Allocator::Heap<uint8_t> allocator;
 
 	STD vector<HANDLE> threadHandles;

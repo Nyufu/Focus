@@ -13,3 +13,4 @@
 #define STRINGIZE
 #define WIDE
 #define SUPPRESS_INITIALIZE
+#define NO_UNIQUE_ADDRESS

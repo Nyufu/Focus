@@ -62,7 +62,7 @@ void Thread::Spawn(ManagedThreadArgs& threadArgs) noexcept {
 DWORD Thread::Entry(void* arg) noexcept {
 	const Thread threadInfo{ arg };
 
-	threadInfo.scheduler->ExecuteScheduler();
+	threadInfo.scheduler->SwitchThreadToFiber();
 
 	return 0;
 }
@@ -199,6 +199,9 @@ FiberBased::~FiberBased() {
 	const auto result = ::VirtualFree(stackPoolPtr, 0, MEM_RELEASE);
 	ASSERT(result);
 	allocator.deallocate(static_cast<uint8_t*>(queueBuffer), 1);
+}
+
+void FiberBased::SwitchThreadToFiber() noexcept {
 }
 
 void FiberBased::Signal() noexcept {
