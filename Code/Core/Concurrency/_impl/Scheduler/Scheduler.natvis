@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AutoVisualizer xmlns="http://schemas.microsoft.com/vstudio/debugger/natvis/2010">
+
+  <Type Name="Focus::Concurrency::_impl::Scheduler::FiberBased">
+    <DisplayString>Running Tasks: {Config::Engine.numberOfThreads - (uint8_t)waitCounter._Storage._Value}</DisplayString>
+
+    <Expand>
+      <CustomListItems>
+        <Variable Name="queue_size" InitialValue="queueDesc.capacityMask + 1" />
+        <Variable Name="i" InitialValue="0" />
+        <Variable Name="item_index" InitialValue="0" />
+        <Variable Name="mask" InitialValue="0" />
+        <Variable Name="red_black_flag" InitialValue="0" />
+
+        <Item Name="[Prio]">"High"</Item>
+        <Exec>i = 0</Exec>
+        <Loop Condition="i &lt; queue_size">
+          <Exec>item_index = tails[1].value._Storage._Value + i</Exec>
+          <Exec>mask = item_index &amp; queue_size</Exec>
+          <Exec>red_black_flag = (item_index &amp; mask) != 0 ? 1 : 0</Exec>
+          <Exec>item_index = item_index &amp; queueDesc.capacityMask</Exec>
+
+          <Break Condition="(uint8_t)(queues[1][item_index]) != red_black_flag" />
+
+          <Item Name="[{i}]">(Focus::Concurrency::_impl::FiberImpl::FiberHandleT*)(((uint64_t)(queues[1][item_index])) &amp; 0xFFFFFFFFFFFFFF00)</Item>
+          <Exec>i++</Exec>
+        </Loop>
+
+        <Item Name="[Prio]">"Normal"</Item>
+        <Loop Condition="i &lt; queue_size">
+          <Exec>item_index = tails[0].value._Storage._Value + i</Exec>
+          <Exec>mask = item_index &amp; queue_size</Exec>
+          <Exec>red_black_flag = (item_index &amp; mask) != 0 ? 1 : 0</Exec>
+          <Exec>item_index = item_index &amp; queueDesc.capacityMask</Exec>
+
+          <Break Condition="(uint8_t)(queues[0][item_index]) != red_black_flag" />
+
+          <Item Name="[{i}]">(Focus::Concurrency::_impl::FiberImpl::FiberHandleT*)(((uint64_t)(queues[0][item_index])) &amp; 0xFFFFFFFFFFFFFF00)</Item>
+
+          <Exec>i++</Exec>
+        </Loop>
+
+        <Item Name="[Prio]">"Low"</Item>
+        <Exec>i = 0</Exec>
+        <Loop Condition="i &lt; queue_size">
+          <Exec>item_index = tails[2].value._Storage._Value + i</Exec>
+          <Exec>mask = item_index &amp; queue_size</Exec>
+          <Exec>red_black_flag = (item_index &amp; mask) != 0 ? 1 : 0</Exec>
+          <Exec>item_index = item_index &amp; queueDesc.capacityMask</Exec>
+
+          <Break Condition="(uint8_t)(queues[2][item_index]) != red_black_flag" />
+
+          <Item Name="[{i}]">(Focus::Concurrency::_impl::FiberImpl::FiberHandleT*)(((uint64_t)(queues[2][item_index])) &amp; 0xFFFFFFFFFFFFFF00)</Item>
+
+          <Exec>i++</Exec>
+        </Loop>
+      </CustomListItems>
+      <Item Name="[Queue Size]">queueDesc.capacityMask + 1</Item>
+    </Expand>
+  </Type>
+
+</AutoVisualizer>

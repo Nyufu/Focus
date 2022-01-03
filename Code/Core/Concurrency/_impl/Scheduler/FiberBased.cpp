@@ -151,6 +151,8 @@ __forceinline void FiberBased::Init(size_t freeSetSizeInBytes, size_t queueSizeI
 		freePools[2]
 	};
 
+	running = true;
+
 	{
 		ManagedThreadArgs threadArgs({ numberOfThreads + 1 }, this, numberOfThreads);
 		Thread::Spawn(threadArgs);
@@ -210,24 +212,45 @@ FiberBased::~FiberBased() {
 	allocator.deallocate(static_cast<uint8_t*>(queueBuffer), 1);
 }
 
+void FiberBased::Shutdown() noexcept {
+	running = false;
+
+	WaitForMultipleObjects(static_cast<DWORD>(threadHandles.size()), threadHandles.data(), TRUE, INFINITE);
+}
+
 void FiberBased::SwitchThreadToFiber() noexcept {
+	while (running) {
+		{
+			uint64_t defaultValue = Config::Engine.numberOfThreads;
+			WaitOnAddress(reinterpret_cast<volatile void*>(STD addressof(waitCounter)), &defaultValue, sizeof(waitCounter), INFINITE);
+		}
+
+		// while (running) {
+		//	::Sleep(0);
+		//}
+		ExecuteScheduler();
+	}
 }
 
 void FiberBased::Signal() noexcept {
-	for (uint64_t localCounter = waitCounter.load(STD memory_order::relaxed);;) {
-		if (!static_cast<uint8_t>(localCounter)) [[likely]]
-			return;
-		if (waitCounter.compare_exchange_strong(localCounter, localCounter - 0x0000000100000001)) {
-			WakeByAddressSingle(STD addressof(waitCounter));
-			return;
+	uint64_t currentCounterValue = waitCounter.load(STD memory_order::relaxed);
+	while (static_cast<uint8_t>(currentCounterValue))
+		[[unlikely]] {
+			if (waitCounter.compare_exchange_strong(currentCounterValue, currentCounterValue - 1)) {
+				WakeByAddressSingle(STD addressof(waitCounter));
+				break;
+			}
 		}
-	}
 }
 
 __forceinline void FiberBased::ExecuteScheduler() noexcept {
 	struct TailState {
 		FiberHandle handle;
 		FiberHandle* address;
+	};
+
+	auto test = [](const TailState& state) {
+		return reinterpret_cast<ptrdiff_t>(state.handle) ^ reinterpret_cast<ptrdiff_t>(*state.address);
 	};
 
 	static constexpr STD array<Priority, enum_count<Priority>> priorities = { Priority::High, Priority::Normal, Priority::Low };
@@ -255,22 +278,24 @@ __forceinline void FiberBased::ExecuteScheduler() noexcept {
 				if (tail.compare_exchange_strong(currentTail, nextTail)) {
 					const auto handle = reinterpret_cast<FiberHandle>(currentValue & 0xFFFFFFFFFFFFFF00);
 					ExecuteFiber(handle);
-					break;
+					goto NEXT;
 				}
 				goto RETRY;
 			}
 
-			it->handle = valueRef;
+			it->handle = reinterpret_cast<FiberHandle>(currentValue);
 			it->address = STD addressof(valueRef);
 			it++;
 		}
 
-		// STD atomic_thread_fence(STD memory_order::seq_cst);
-
-		if (const auto& a = tailStates[0], &b = tailStates[1], &c = tailStates[2]; a.handle == *a.address || b.handle == *b.address || c.handle == *c.address) {
-			auto counterValue = waitCounter.fetch_add(1, STD memory_order::acquire) + 1;
-			WaitOnAddress(reinterpret_cast<volatile void*>(STD addressof(waitCounter)), &counterValue, sizeof(counterValue), INFINITE);
+		if (const auto& a = tailStates[0], &b = tailStates[1], &c = tailStates[2]; (test(a) | test(b) | test(c)) == 0) {
+			auto currentCounterValue = waitCounter.fetch_add(0x101, STD memory_order::seq_cst) + 0x101;
+			if (!(test(a) | test(b) | test(c)))
+				WaitOnAddress(reinterpret_cast<volatile void*>(STD addressof(waitCounter)), &currentCounterValue, sizeof(waitCounter), INFINITE);
 		}
+
+	NEXT:
+		(void)0;
 	}
 }
 

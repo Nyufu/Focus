@@ -5,9 +5,10 @@
 MSVC_WARNING_DISABLE(4075)	   // supress an init_seg warning which works in this case
 #pragma init_seg(".CRT$XCU-Z") // The Scheduler::instance will be in instantiated last
 
-namespace Focus::Concurrency::_impl::Scheduler {
+namespace Focus::Concurrency {
+namespace _impl::Scheduler {
 
-static FiberBased instance;
+FiberBased instance;
 
 FiberHandle GetEmptyFiber(StackSize stackSize) noexcept {
 	return instance.GetEmptyFiber(stackSize);
@@ -21,4 +22,13 @@ void ReleaseFiber(FiberHandle handle) noexcept {
 	instance.ReleaseFiber(handle);
 }
 
+}
+
+namespace Scheduler {
+
+void Shutdown() noexcept {
+	_impl::Scheduler::instance.Shutdown();
+}
+
+}
 }

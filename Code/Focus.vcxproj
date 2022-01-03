@@ -261,6 +261,7 @@
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="BaseLib\managed_object.natvis" />
+    <Natvis Include="Core\Concurrency\_impl\Scheduler\Scheduler.natvis" />
   </ItemGroup>
   <ItemGroup>
     <MASM Include="Core\Concurrency\_impl\Fiber.asm" />

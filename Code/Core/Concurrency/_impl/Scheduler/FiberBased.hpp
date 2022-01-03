@@ -49,6 +49,8 @@ public:
 	FiberBased();
 	~FiberBased();
 
+	void Shutdown() noexcept;
+
 	FiberHandle GetEmptyFiber(StackSize stackSize) noexcept;
 	void ReleaseFiber(FiberHandle handle) noexcept;
 	void ScheduleFiber(FiberHandle handle, Priority priority);
@@ -86,6 +88,7 @@ private:
 	STD array<AlignedValue, enum_count<Priority>> tails;
 
 	alignas(platform::cacheline_size) STD atomic_uint64_t waitCounter;
+	alignas(platform::cacheline_size) STD atomic_bool running;
 
 private:
 	static FiberHandle* GetValue(const STD array<FiberHandle*, enum_count<Priority>>& array, Priority priority) noexcept {

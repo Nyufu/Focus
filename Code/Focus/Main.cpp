@@ -31,7 +31,9 @@ int main() noexcept {
 	auto task = CreateTask(foo1, std::vector<int>(4), Priority::Low, StackSize::Small);
 	// auto task = CreateTask(foo2, &foo, Priority::Low, StackSize::Small);
 
-	Sleep(INFINITE);
-	// std::this_thread::sleep_for(60s);
+	std::this_thread::sleep_for(60s);
+
+	Scheduler::Shutdown();
+
 	return 0;
 }

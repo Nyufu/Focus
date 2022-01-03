@@ -124,6 +124,9 @@
     <Natvis Include="BaseLib\managed_object.natvis">
       <Filter>BaseLib</Filter>
     </Natvis>
+    <Natvis Include="Core\Concurrency\_impl\Scheduler\Scheduler.natvis">
+      <Filter>Core\Concurrency\_impl\Scheduler</Filter>
+    </Natvis>
   </ItemGroup>
   <ItemGroup>
     <MASM Include="Core\Concurrency\_impl\Fiber.asm">

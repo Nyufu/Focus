@@ -4,6 +4,12 @@
 
 namespace Focus::Concurrency {
 
+namespace Scheduler {
+
+void Shutdown() noexcept;
+
+}
+
 template <class Ty>
 class Task {
 public:
