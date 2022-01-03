@@ -5,7 +5,7 @@
 #define ONLY_CONSTRUCT(T)            \
 	T(const T&) = delete;            \
 	T(T&&) = delete;                 \
-									 \
+                                     \
 	T& operator=(const T&) = delete; \
 	T& operator=(T&&) = delete;
 
@@ -74,7 +74,7 @@
 #define SUPPRESS_INITIALIZE(x)
 #endif
 
-#if _MSC_VER >= 1929 // VS2019 v16.10 and later (_MSC_FULL_VER >= 192829913 for VS 2019 v16.9)
+#if !defined(__CLANG__) && _MSC_VER >= 1929 // VS2019 v16.10 and later (_MSC_FULL_VER >= 192829913 for VS 2019 v16.9)
 // Works with /std:c++14 and /std:c++17, and performs optimization
 
 #define NO_UNIQUE_ADDRESS [[msvc::no_unique_address]]
